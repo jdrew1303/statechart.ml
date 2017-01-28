@@ -1,0 +1,16 @@
+{
+  "name": "statechart",
+  "version": "0.1.0",
+  "description": "Statechart implementation for js",
+  "main": "lib/js/src/lib/statechart.js",
+  "repository": "https://github.com/statechart/statechart.ml",
+  "author": "Cameron Bytheway <bytheway.cameron@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "bs-platform": "^1.4.1"
+  },
+  "scripts": {
+    "build" : "bsb",
+    "watch" : "bsb -w"
+  }
+}

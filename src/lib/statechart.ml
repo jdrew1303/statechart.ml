@@ -1,2 +1,2 @@
-let hello =
-  "world"
+let () =
+  print_endline "hello statechart"

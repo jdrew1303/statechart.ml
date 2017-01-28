@@ -1,0 +1,4 @@
+{
+  "name" : "statechart",
+  "sources" : { "dir" :  "src/lib"}
+}

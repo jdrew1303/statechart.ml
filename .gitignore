@@ -19,3 +19,7 @@ _build/
 setup.data
 setup.log
 *.bak
+
+# bucklescript generated files
+lib
+node_modules
