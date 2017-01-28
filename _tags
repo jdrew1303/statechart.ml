@@ -57,5 +57,7 @@ true: annot, bin_annot
 <test/*.ml{,i,y}>: use_statechart
 <test/*.ml{,i,y}>: use_statechart_document
 # OASIS_STOP
+"lib": -traverse
+"lib": not_hygienic
 "node_modules": -traverse
 "node_modules": not_hygienic
