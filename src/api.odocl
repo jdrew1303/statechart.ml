@@ -1,4 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: 101b1bc4549b55eff7cd72a37bf05289)
-Statechart
+# DO NOT EDIT (digest: 2a9f490a054f3ecf718618cb618e090a)
+lib/Statechart
+document/Statechart_document
+scxml/Statechart_scxml
 # OASIS_STOP

@@ -1,0 +1,12 @@
+# OASIS_START
+# DO NOT EDIT (digest: 08ae04aa56911c3fda588501fcd8d66c)
+version = "dev"
+description = "Statechart implementation for OCaml"
+requires = "statechart_analyzer lambdasoup markup"
+archive(byte) = "statechart_scxml.cma"
+archive(byte, plugin) = "statechart_scxml.cma"
+archive(native) = "statechart_scxml.cmxa"
+archive(native, plugin) = "statechart_scxml.cmxs"
+exists_if = "statechart_scxml.cma"
+# OASIS_STOP
+

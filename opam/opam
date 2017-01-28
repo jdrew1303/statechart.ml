@@ -20,8 +20,10 @@ build-test: [
   ["ocaml" "setup.ml" "-test"]
 ]
 depends: [
+  "piqilib" {>= "0.6"}
+  "lambdasoup" {>= "0.6"}
+  "markup" {>= "0.7"}
   "alcotest" {test & >= "0.4.1"}
   "ocamlfind" {build}
-  "result"
 ]
 available: [ ocaml-version >= "4.01.0" ]

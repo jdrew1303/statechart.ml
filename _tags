@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: cd4e7f808c819ccedb6777e9f7ea45a2)
+# DO NOT EDIT (digest: 705e2101caf96cf01b17648be84f762a)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -14,11 +14,46 @@ true: annot, bin_annot
 ".git": not_hygienic
 "_darcs": -traverse
 "_darcs": not_hygienic
+# Library statechart_document
+"src/document/statechart_document.cmxs": use_statechart_document
+<src/document/*.ml{,i,y}>: package(piqilib)
+# Library statechart_analyzer
+"src/analyzer/statechart_analyzer.cmxs": use_statechart_analyzer
+<src/analyzer/*.ml{,i,y}>: package(piqilib)
+<src/analyzer/*.ml{,i,y}>: use_statechart_document
 # Library statechart
-"src/statechart.cmxs": use_statechart
+"src/lib/statechart.cmxs": use_statechart
+<src/lib/*.ml{,i,y}>: package(piqilib)
+<src/lib/*.ml{,i,y}>: use_statechart_document
+# Library statechart_scxml
+"src/scxml/statechart_scxml.cmxs": use_statechart_scxml
+<src/scxml/*.ml{,i,y}>: package(lambdasoup)
+<src/scxml/*.ml{,i,y}>: package(markup)
+<src/scxml/*.ml{,i,y}>: package(piqilib)
+<src/scxml/*.ml{,i,y}>: use_statechart_analyzer
+<src/scxml/*.ml{,i,y}>: use_statechart_document
+# Executable statechart-scxml
+<src/scxml_cli/Main.{native,byte}>: package(cmdliner)
+<src/scxml_cli/Main.{native,byte}>: package(lambdasoup)
+<src/scxml_cli/Main.{native,byte}>: package(markup)
+<src/scxml_cli/Main.{native,byte}>: package(piqilib)
+<src/scxml_cli/Main.{native,byte}>: use_statechart_analyzer
+<src/scxml_cli/Main.{native,byte}>: use_statechart_document
+<src/scxml_cli/Main.{native,byte}>: use_statechart_scxml
+<src/scxml_cli/*.ml{,i,y}>: package(cmdliner)
+<src/scxml_cli/*.ml{,i,y}>: package(lambdasoup)
+<src/scxml_cli/*.ml{,i,y}>: package(markup)
+<src/scxml_cli/*.ml{,i,y}>: package(piqilib)
+<src/scxml_cli/*.ml{,i,y}>: use_statechart_analyzer
+<src/scxml_cli/*.ml{,i,y}>: use_statechart_document
+<src/scxml_cli/*.ml{,i,y}>: use_statechart_scxml
 # Executable test_statechart
 <test/test_statechart.{native,byte}>: package(alcotest)
+<test/test_statechart.{native,byte}>: package(piqilib)
 <test/test_statechart.{native,byte}>: use_statechart
+<test/test_statechart.{native,byte}>: use_statechart_document
 <test/*.ml{,i,y}>: package(alcotest)
+<test/*.ml{,i,y}>: package(piqilib)
 <test/*.ml{,i,y}>: use_statechart
+<test/*.ml{,i,y}>: use_statechart_document
 # OASIS_STOP

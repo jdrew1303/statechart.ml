@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 3cf7065ccc8ecdde348a832726cf2437) *)
+(* DO NOT EDIT (digest: b57a817faf612990383eba644c3afd87) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -885,10 +885,23 @@ end
 open Ocamlbuild_plugin;;
 let package_default =
   {
-     MyOCamlbuildBase.lib_ocaml = [("statechart", ["src"], [])];
+     MyOCamlbuildBase.lib_ocaml =
+       [
+          ("statechart_document", ["src/document"], []);
+          ("statechart_analyzer", ["src/analyzer"], []);
+          ("statechart", ["src/lib"], []);
+          ("statechart_scxml", ["src/scxml"], [])
+       ];
      lib_c = [];
      flags = [];
-     includes = [("test", ["src"])]
+     includes =
+       [
+          ("test", ["src/lib"]);
+          ("src/scxml_cli", ["src/scxml"]);
+          ("src/scxml", ["src/analyzer"]);
+          ("src/lib", ["src/document"]);
+          ("src/analyzer", ["src/document"])
+       ]
   }
   ;;
 
@@ -896,6 +909,6 @@ let conf = {MyOCamlbuildFindlib.no_automatic_syntax = false}
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
-# 900 "myocamlbuild.ml"
+# 913 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch dispatch_default;;

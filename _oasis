@@ -9,14 +9,39 @@ License:     MIT
 Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
 OCamlVersion: >= 4.01
-Synopsis:    SCXML implementation
+Synopsis:    Statechart implementation for OCaml
 Description:
    TODO
 
 Library statechart
-  Path:         src
+  Path:         src/lib
   Findlibname:  statechart
+  BuildDepends: statechart_document
   Modules:      Statechart
+
+Library statechart_analyzer
+  Path:         src/analyzer
+  Findlibname:  statechart_analyzer
+  BuildDepends: statechart_document
+  Modules:      Statechart_analyzer
+
+Library statechart_document
+  Path:         src/document
+  Findlibname:  statechart_document
+  BuildDepends: piqilib (>= 0.6.0)
+  Modules:      Statechart_document
+
+Library statechart_scxml
+  Path:         src/scxml
+  Findlibname:  statechart_scxml
+  BuildDepends: statechart_analyzer, lambdasoup (>= 0.6.0), markup (>= 0.7.0)
+  Modules:      Statechart_scxml
+
+Executable statechart-scxml
+  Path:         src/scxml_cli
+  MainIs:       Main.ml
+  BuildDepends: statechart_scxml, cmdliner (>= 0.9)
+  CompiledObject: best
 
 Document api
   Title:                Documentation and API reference
@@ -24,7 +49,7 @@ Document api
   BuildTools+:          ocamldoc
   Install:              true
   XOCamlBuildPath:      src
-  XOCamlBuildLibraries: statechart
+  XOCamlBuildLibraries: statechart, statechart_document, statechart_scxml
 
 Executable test_statechart
   Path:             test
