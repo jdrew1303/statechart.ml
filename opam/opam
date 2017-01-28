@@ -12,7 +12,7 @@ build: [
 ]
 install: ["ocaml" "setup.ml" "-install"]
 remove: [
-  ["ocamlfind" "remove" "statechart"]
+  ["ocaml" "setup.ml" "-uninstall"]
 ]
 build-test: [
   ["ocaml" "setup.ml" "-configure" "--enable-tests"]
