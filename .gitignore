@@ -19,6 +19,7 @@ _build/
 setup.data
 setup.log
 *.bak
+*.docdir
 
 # bucklescript generated files
 lib
