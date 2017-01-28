@@ -1,0 +1,11 @@
+# OASIS_START
+# DO NOT EDIT (digest: 2856c7879ace438c12337aa14d64131b)
+version = "dev"
+description = "SCXML implementation"
+archive(byte) = "statechart.cma"
+archive(byte, plugin) = "statechart.cma"
+archive(native) = "statechart.cmxa"
+archive(native, plugin) = "statechart.cmxs"
+exists_if = "statechart.cma"
+# OASIS_STOP
+

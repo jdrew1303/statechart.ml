@@ -1,0 +1,27 @@
+opam-version: "1.2"
+name: "statechart"
+maintainer: "Cameron Bytheway <bytheway.cameron@gmail.com>"
+authors: [ "Cameron Bytheway <bytheway.cameron@gmail.com>" ]
+license: "MIT"
+homepage: "https://github.com/statechart/statechart.ml"
+bug-reports: "https://github.com/statechart/statechart.ml/issues"
+dev-repo: "https://github.com/statechart/statechart.ml.git"
+build: [
+  ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
+  ["ocaml" "setup.ml" "-build"]
+]
+install: ["ocaml" "setup.ml" "-install"]
+remove: [
+  ["ocamlfind" "remove" "statechart"]
+]
+build-test: [
+  ["ocaml" "setup.ml" "-configure" "--enable-tests"]
+  ["ocaml" "setup.ml" "-build"]
+  ["ocaml" "setup.ml" "-test"]
+]
+depends: [
+  "alcotest" {test & >= "0.4.1"}
+  "ocamlfind" {build}
+  "result"
+]
+available: [ ocaml-version >= "4.01.0" ]

@@ -1,0 +1,40 @@
+OASISFormat: 0.4
+Name:        statechart
+Version:     dev
+Authors:     Cameron Bytheway <bytheway.cameron@gmail.com>
+Maintainers: Cameron Bytheway <bytheway.cameron@gmail.com>
+Homepage:    https://github.com/statechart/statechart.ml
+Copyrights:  (C) 2017 Cameron Bytheway
+License:     MIT
+Plugins:     META (0.4), DevFiles (0.4)
+BuildTools:  ocamlbuild
+OCamlVersion: >= 4.01
+Synopsis:    SCXML implementation
+Description:
+   TODO
+
+Library statechart
+  Path:         src
+  Findlibname:  statechart
+  Modules:      Statechart
+
+Document api
+  Title:                Documentation and API reference
+  Type:                 ocamlbuild (0.4)
+  BuildTools+:          ocamldoc
+  Install:              true
+  XOCamlBuildPath:      src
+  XOCamlBuildLibraries: statechart
+
+Executable test_statechart
+  Path:             test
+  MainIs:           test_statechart.ml
+  Build$:           flag(tests)
+  CompiledObject:   best
+  Install:          false
+  BuildDepends:     statechart, alcotest (>= 0.4.1)
+
+Test test_statechart
+  Run$:             flag(tests)
+  Command:          $test_statechart
+  WorkingDirectory: test
