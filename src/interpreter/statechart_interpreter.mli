@@ -1,14 +1,11 @@
 open Statechart
 
-(* TODO expose this as a "public" type *)
-type configuration
+type configuration = state list
 
 module type ContextType =
   sig
     type t
     (** The type of the context *)
-
-    val init_datamodel : t -> datamodel -> t
 
     val update_configuration : t -> configuration -> t
     (** Update the context configuration *)
@@ -42,8 +39,6 @@ module type Interpreter =
   sig
     type t
     (** The type of the context *)
-
-    val init : t -> document -> t
 
     val start : t -> document -> t
     (** Start the interpreter *)
