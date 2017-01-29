@@ -65,114 +65,114 @@ module rec TYPES:
 and Document:
   sig
     type t = {
-      mutable name: string option;
-      mutable binding: TYPES.binding;
-      mutable datamodel: TYPES.param list;
-      mutable initial_transitions: TYPES.transition list;
-      mutable states: TYPES.state list;
+      name: string option;
+      binding: TYPES.binding;
+      datamodel: TYPES.param list;
+      initial_transitions: TYPES.transition list;
+      states: TYPES.state list;
     }
   end = Document
 and State:
   sig
     type t = {
-      mutable idx: TYPES.ref;
-      mutable depth: TYPES.uint;
-      mutable priority: TYPES.uint;
-      mutable id: string option;
-      mutable type_: TYPES.state_type;
-      mutable initial_states: TYPES.ref list;
-      mutable transitions: TYPES.transition list;
-      mutable invocations: TYPES.invoke list;
-      mutable on_enter: TYPES.expression list;
-      mutable on_exit: TYPES.expression list;
-      mutable children: TYPES.ref list;
-      mutable parent: TYPES.ref option;
-      mutable ancestors: TYPES.ref list;
-      mutable descendants: TYPES.ref list;
-      mutable history: TYPES.ref option;
-      mutable history_type: TYPES.history_type option;
+      idx: TYPES.ref;
+      depth: TYPES.uint;
+      priority: TYPES.uint;
+      id: string option;
+      type_: TYPES.state_type;
+      initial_states: TYPES.ref list;
+      transitions: TYPES.transition list;
+      invocations: TYPES.invoke list;
+      on_enter: TYPES.expression list;
+      on_exit: TYPES.expression list;
+      children: TYPES.ref list;
+      parent: TYPES.ref option;
+      ancestors: TYPES.ref list;
+      descendants: TYPES.ref list;
+      history: TYPES.ref option;
+      history_type: TYPES.history_type option;
     }
   end = State
 and Transition:
   sig
     type t = {
-      mutable scope: TYPES.ref;
-      mutable depth: TYPES.uint;
-      mutable priority: TYPES.uint;
-      mutable source: TYPES.ref option;
-      mutable targets: TYPES.ref list;
-      mutable events: string list;
-      mutable condition: TYPES.expression option;
-      mutable type_: TYPES.transition_type;
-      mutable on_transition: TYPES.expression list;
+      scope: TYPES.ref;
+      depth: TYPES.uint;
+      priority: TYPES.uint;
+      source: TYPES.ref option;
+      targets: TYPES.ref list;
+      events: string list;
+      condition: TYPES.expression option;
+      type_: TYPES.transition_type;
+      on_transition: TYPES.expression list;
     }
   end = Transition
 and Invoke:
   sig
     type t = {
-      mutable type_: TYPES.expression option;
-      mutable src: TYPES.expression option;
-      mutable id: TYPES.expression option;
-      mutable namelist: TYPES.var list;
-      mutable autoforward: bool;
-      mutable params: TYPES.param list;
-      mutable content: TYPES.content option;
-      mutable on_exit: TYPES.expression list;
+      type_: TYPES.expression option;
+      src: TYPES.expression option;
+      id: TYPES.expression option;
+      namelist: TYPES.var list;
+      autoforward: bool;
+      params: TYPES.param list;
+      content: TYPES.content option;
+      on_exit: TYPES.expression list;
     }
   end = Invoke
 and Param:
   sig
     type t = {
-      mutable id: string;
-      mutable expression: TYPES.expression option;
+      id: string;
+      expression: TYPES.expression option;
     }
   end = Param
 and Assign:
   sig
     type t = {
-      mutable id: string;
-      mutable expression: TYPES.expression option;
+      id: string;
+      expression: TYPES.expression option;
     }
   end = Assign
 and Foreach:
   sig
     type t = {
-      mutable array: TYPES.expression;
-      mutable item: TYPES.var option;
-      mutable index: TYPES.var option;
-      mutable expressions: TYPES.expression list;
+      array: TYPES.expression;
+      item: TYPES.var option;
+      index: TYPES.var option;
+      expressions: TYPES.expression list;
     }
   end = Foreach
 and Case:
   sig
     type t = {
-      mutable clauses: TYPES.case_clause list;
+      clauses: TYPES.case_clause list;
     }
   end = Case
 and Case_clause:
   sig
     type t = {
-      mutable clause: TYPES.expression;
-      mutable body: TYPES.expression;
+      clause: TYPES.expression;
+      body: TYPES.expression;
     }
   end = Case_clause
 and Log:
   sig
     type t = {
-      mutable label: string option;
-      mutable expression: TYPES.expression option;
+      label: string option;
+      expression: TYPES.expression option;
     }
   end = Log
 and Raise:
   sig
     type t = {
-      mutable event: string;
+      event: string;
     }
   end = Raise
 and Var:
   sig
     type t = {
-      mutable name: string;
+      name: string;
     }
   end = Var
 

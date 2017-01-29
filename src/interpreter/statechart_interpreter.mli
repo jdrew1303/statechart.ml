@@ -1,12 +1,37 @@
 open Statechart
 
+(* TODO expose this as a "public" type *)
+type configuration
+
 module type ContextType =
   sig
     type t
+    (** The type of the context *)
+
+    val update_configuration : t -> configuration -> t
+    (** Update the context configuration *)
+
+    val get_configuration : t -> configuration
+    (** Get the context configuration *)
+
     val query : t -> expression -> bool
+    (** Query the context with the expression.
+        This should be a pure function with no side-effects *)
+
     val execute : t -> expression -> t
+    (** Execute expression inside the context.
+        This doesn't have the actually execute at this point:
+        it can be applied at a later point once it's outside of the
+        interpretation. *)
+
     val invoke : t -> invoke -> t
-    val close : t -> t
+    (** Invoke another service inside the context.
+        This doesn't have the actually execute at this point:
+        it can be applied at a later point once it's outside of the
+        interpretation. *)
+
+    val stop : t -> t
+    (** Perform any needed cleanup here *)
   end
 
 module type Interpreter =

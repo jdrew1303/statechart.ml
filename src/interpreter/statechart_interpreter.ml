@@ -7,6 +7,8 @@ module State = struct
 end
 module Configuration = Set.Make(State)
 
+type configuration = State
+
 module EnterTransition = struct
   type t = transition
   let compare = Statechart.compare_transition
@@ -22,10 +24,12 @@ module ExitTransitions = Set.Make(ExitTransition)
 module type ContextType =
   sig
     type t
+    val update_configuration : t -> configuration -> t
+    val get_configuration : t -> configuration
     val query : t -> expression -> bool
     val execute : t -> expression -> t
     val invoke : t -> invoke -> t
-    val close : t -> t
+    val stop : t -> t
   end
 
 module type Interpreter =
