@@ -16,20 +16,20 @@ Description:
 Library statechart
   Path:         src/lib
   Findlibname:  statechart
-  BuildDepends: statechart_document
+  BuildDepends: statechart_format
   Modules:      Statechart
 
 Library statechart_analyzer
   Path:         src/analyzer
   Findlibname:  statechart_analyzer
-  BuildDepends: statechart_document
+  BuildDepends: statechart_format
   Modules:      Statechart_analyzer
 
-Library statechart_document
-  Path:         src/document
-  Findlibname:  statechart_document
-  BuildDepends: piqilib (>= 0.6.0)
-  Modules:      Statechart_document
+Library statechart_format
+  Path:         src/format
+  Findlibname:  statechart_format
+  Modules:      Statechart_format,
+                Statechart_format_runtime
 
 Library statechart_scxml
   Path:         src/scxml
@@ -49,7 +49,7 @@ Document api
   BuildTools+:          ocamldoc
   Install:              true
   XOCamlBuildPath:      src
-  XOCamlBuildLibraries: statechart, statechart_document, statechart_scxml
+  XOCamlBuildLibraries: statechart, statechart_format, statechart_scxml
 
 Executable test_statechart
   Path:             test

@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: b57a817faf612990383eba644c3afd87) *)
+(* DO NOT EDIT (digest: a04387c78f107d9ada5d9d115859130b) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -887,7 +887,7 @@ let package_default =
   {
      MyOCamlbuildBase.lib_ocaml =
        [
-          ("statechart_document", ["src/document"], []);
+          ("statechart_format", ["src/format"], []);
           ("statechart_analyzer", ["src/analyzer"], []);
           ("statechart", ["src/lib"], []);
           ("statechart_scxml", ["src/scxml"], [])
@@ -899,8 +899,8 @@ let package_default =
           ("test", ["src/lib"]);
           ("src/scxml_cli", ["src/scxml"]);
           ("src/scxml", ["src/analyzer"]);
-          ("src/lib", ["src/document"]);
-          ("src/analyzer", ["src/document"])
+          ("src/lib", ["src/format"]);
+          ("src/analyzer", ["src/format"])
        ]
   }
   ;;
