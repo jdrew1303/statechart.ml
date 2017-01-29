@@ -5,7 +5,27 @@ module rec TYPES:
     type float = TYPES.float64
     type binary = string
     type ref = TYPES.uint
-    type binding =
+    type expression =
+      [
+        | `bool of bool
+        | `int of int
+        | `float of TYPES.float
+        | `string of string
+        | `binary of TYPES.binary
+        | `assign of TYPES.assign
+        | `foreach of TYPES.foreach
+        | `case of TYPES.case
+        | `log of TYPES.log
+        | `raise of TYPES.raise
+        | `var of TYPES.var
+      ]
+    type content =
+      [
+        | `string of string
+        | expression
+        | `document of TYPES.document
+      ]
+    type document_binding =
       [
         | `early
         | `late
@@ -29,49 +49,91 @@ module rec TYPES:
         | `external_
         | `internal
       ]
-    type expression =
-      [
-        | `bool of bool
-        | `int of int
-        | `float of TYPES.float
-        | `string of string
-        | `binary of TYPES.binary
-        | `assign of TYPES.assign
-        | `foreach of TYPES.foreach
-        | `case of TYPES.case
-        | `log of TYPES.log
-        | `raise of TYPES.raise
-        | `var of TYPES.var
-      ]
-    type content =
-      [
-        | `string of string
-        | expression
-        | `document of TYPES.document
-      ]
-    type document = Document.t
-    type state = State.t
-    type transition = Transition.t
-    type invoke = Invoke.t
-    type param = Param.t
     type assign = Assign.t
-    type foreach = Foreach.t
     type case = Case.t
     type case_clause = Case_clause.t
+    type document = Document.t
+    type foreach = Foreach.t
+    type invoke = Invoke.t
     type log = Log.t
+    type param = Param.t
     type raise = Raise.t
+    type state = State.t
+    type transition = Transition.t
     type var = Var.t
   end = TYPES
+and Assign:
+  sig
+    type t = {
+      id: string;
+      expression: TYPES.expression option;
+    }
+  end = Assign
+and Case:
+  sig
+    type t = {
+      clauses: TYPES.case_clause list;
+    }
+  end = Case
+and Case_clause:
+  sig
+    type t = {
+      clause: TYPES.expression;
+      body: TYPES.expression;
+    }
+  end = Case_clause
 and Document:
   sig
     type t = {
       name: string option;
-      binding: TYPES.binding;
+      binding: TYPES.document_binding;
+      initial_transition: TYPES.transition;
+      states: TYPES.state array;
       datamodel: TYPES.param list;
-      initial_transitions: TYPES.transition list;
-      states: TYPES.state list;
     }
   end = Document
+and Foreach:
+  sig
+    type t = {
+      array: TYPES.expression;
+      item: TYPES.var option;
+      index: TYPES.var option;
+      expressions: TYPES.expression list;
+    }
+  end = Foreach
+and Invoke:
+  sig
+    type t = {
+      type_: TYPES.expression option;
+      src: TYPES.expression option;
+      id: TYPES.expression option;
+      namelist: TYPES.var list;
+      autoforward: bool;
+      params: TYPES.param list;
+      content: TYPES.content option;
+      on_exit: TYPES.expression list;
+    }
+  end = Invoke
+and Log:
+  sig
+    type t = {
+      label: string option;
+      expression: TYPES.expression option;
+    }
+  end = Log
+and Param:
+  sig
+    type t = {
+      id: string;
+      expression: TYPES.expression option;
+    }
+  end = Param
+and Raise:
+  sig
+    type t = {
+      event: string;
+    }
+  end = Raise
 and State:
   sig
     type t = {
@@ -107,68 +169,6 @@ and Transition:
       on_transition: TYPES.expression list;
     }
   end = Transition
-and Invoke:
-  sig
-    type t = {
-      type_: TYPES.expression option;
-      src: TYPES.expression option;
-      id: TYPES.expression option;
-      namelist: TYPES.var list;
-      autoforward: bool;
-      params: TYPES.param list;
-      content: TYPES.content option;
-      on_exit: TYPES.expression list;
-    }
-  end = Invoke
-and Param:
-  sig
-    type t = {
-      id: string;
-      expression: TYPES.expression option;
-    }
-  end = Param
-and Assign:
-  sig
-    type t = {
-      id: string;
-      expression: TYPES.expression option;
-    }
-  end = Assign
-and Foreach:
-  sig
-    type t = {
-      array: TYPES.expression;
-      item: TYPES.var option;
-      index: TYPES.var option;
-      expressions: TYPES.expression list;
-    }
-  end = Foreach
-and Case:
-  sig
-    type t = {
-      clauses: TYPES.case_clause list;
-    }
-  end = Case
-and Case_clause:
-  sig
-    type t = {
-      clause: TYPES.expression;
-      body: TYPES.expression;
-    }
-  end = Case_clause
-and Log:
-  sig
-    type t = {
-      label: string option;
-      expression: TYPES.expression option;
-    }
-  end = Log
-and Raise:
-  sig
-    type t = {
-      event: string;
-    }
-  end = Raise
 and Var:
   sig
     type t = {

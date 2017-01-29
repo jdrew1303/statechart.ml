@@ -60,10 +60,10 @@ module Make(Ctx : ContextType) =
       |> enter_states doc transitions
 
     let start context doc =
-      enter_states context doc doc.Document.initial_transitions
+      enter_states context doc [doc.Document.initial_transition]
 
     let handle_event context doc event =
-      enter_states context doc doc.Document.initial_transitions
+      enter_states context doc [doc.Document.initial_transition]
 
     let stop context =
       context
