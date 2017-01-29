@@ -8,6 +8,8 @@ module type ContextType =
     type t
     (** The type of the context *)
 
+    val init_datamodel : t -> datamodel -> t
+
     val update_configuration : t -> configuration -> t
     (** Update the context configuration *)
 
@@ -30,6 +32,8 @@ module type ContextType =
         it can be applied at a later point once it's outside of the
         interpretation. *)
 
+    val cancel_invoke : t -> invoke -> t
+
     val stop : t -> t
     (** Perform any needed cleanup here *)
   end
@@ -38,6 +42,8 @@ module type Interpreter =
   sig
     type t
     (** The type of the context *)
+
+    val init : t -> document -> t
 
     val start : t -> document -> t
     (** Start the interpreter *)

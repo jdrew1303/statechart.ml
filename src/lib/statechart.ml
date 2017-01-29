@@ -178,6 +178,8 @@ and Var:
 
 include TYPES
 
+type datamodel = param list
+
 let compare_state s1 s2 =
   match s1.State.depth, s2.State.depth with
   | d1, d2 when d1 = d2 -> Pervasives.compare s1.State.priority s2.State.priority
