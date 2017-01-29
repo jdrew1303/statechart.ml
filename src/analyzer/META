@@ -1,8 +1,8 @@
 # OASIS_START
-# DO NOT EDIT (digest: 58fe1b4a72ee080f10c4d3e9ae98f892)
+# DO NOT EDIT (digest: 847814e168254eab7a4b8e2489281cf4)
 version = "dev"
 description = "Statechart implementation for OCaml"
-requires = "statechart_format"
+requires = "statechart"
 archive(byte) = "statechart_analyzer.cma"
 archive(byte, plugin) = "statechart_analyzer.cma"
 archive(native) = "statechart_analyzer.cmxa"

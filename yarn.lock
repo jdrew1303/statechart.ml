@@ -2,6 +2,92 @@
 # yarn lockfile v1
 
 
+"@opam-alpha/conf-m4@*":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@opam-alpha/conf-m4/-/conf-m4-4.1.0.tgz#91500bb3c9c9ca790731671035a5beb0664e0ce8"
+  dependencies:
+    conf-m4-actual "git://github.com/npm-opam/conf-m4.git#4.1.0"
+
+"@opam-alpha/ocaml@4.2.3":
+  version "4.2.3"
+  resolved "https://registry.yarnpkg.com/@opam-alpha/ocaml/-/ocaml-4.2.3.tgz#44c6e23fbb716196d4a6121f7751e09c0ad34018"
+  dependencies:
+    ocaml "git+https://github.com/npm-opam/ocaml.git#npm-4.02.3"
+
+"@opam-alpha/ocamlbuild@*":
+  version "0.9.2"
+  resolved "https://registry.yarnpkg.com/@opam-alpha/ocamlbuild/-/ocamlbuild-0.9.2.tgz#b5d67c1e7bd3be9091333694f045d7725b77851f"
+
+"@opam-alpha/ocamlfind@*":
+  version "1.6.2"
+  resolved "https://registry.yarnpkg.com/@opam-alpha/ocamlfind/-/ocamlfind-1.6.2.tgz#4fb4c7f3b0b039b786aeaf7efc460c420e90055d"
+  dependencies:
+    ocamlfind-actual "git+https://github.com/npm-opam/ocamlfind.git#1.6.2"
+
+"@opam-alpha/react@^1.1.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@opam-alpha/react/-/react-1.2.0.tgz#ff94aef21609ce9cc24d45b2a2e0fae97f5234a1"
+  dependencies:
+    react-actual "git://github.com/npm-opam/react.git#1.2.0"
+
 bs-platform@^1.4.1:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-1.4.1.tgz#b6774b4fb78975eb65bc84820af37e686187dbbf"
+
+"conf-m4-actual@git://github.com/npm-opam/conf-m4.git#4.1.0":
+  version "4.1.0"
+  resolved "git://github.com/npm-opam/conf-m4.git#75e353ae7ae97a988319ddb0e97ecfa25bce4739"
+  dependencies:
+    dependency-env "*"
+    nopam "*"
+    opam-installer-bin "https://github.com/yunxing/opam-installer-bin.git"
+    substs "https://github.com/yunxing/substs.git"
+
+dependency-env@*, "dependency-env@https://github.com/npm-ml/dependency-env.git":
+  version "0.1.1"
+  resolved "https://github.com/npm-ml/dependency-env.git#94c75aff3a71587afb570d89bcf2eef7996bb67f"
+  dependencies:
+    resolve "^1.1.7"
+
+nopam@*, "nopam@https://github.com/yunxing/nopam.git":
+  version "0.1.0"
+  resolved "https://github.com/yunxing/nopam.git#7cd19f068ac9aaf75010cd6961f7c65c779a1d4a"
+
+"ocaml@git+https://github.com/npm-opam/ocaml.git#npm-4.02.3":
+  version "4.2.3"
+  resolved "git+https://github.com/npm-opam/ocaml.git#0bb98be8e5233a02282ed8de0c8965677ddbde33"
+
+"ocamlfind-actual@git+https://github.com/npm-opam/ocamlfind.git#1.6.2":
+  version "1.6.2"
+  resolved "git+https://github.com/npm-opam/ocamlfind.git#f6ea48c7628210d477ead863d32feba2357b9afe"
+  dependencies:
+    "@opam-alpha/conf-m4" "*"
+    "@opam-alpha/ocaml" "4.2.3"
+    dependency-env "*"
+    nopam "*"
+
+"opam-installer-bin@https://github.com/yunxing/opam-installer-bin.git":
+  version "0.0.0"
+  resolved "https://github.com/yunxing/opam-installer-bin.git#689ede681217f76fb2f82a9f4528e192a5b543ba"
+  dependencies:
+    dependency-env "https://github.com/npm-ml/dependency-env.git"
+    nopam "https://github.com/yunxing/nopam.git"
+
+"react-actual@git://github.com/npm-opam/react.git#1.2.0":
+  version "1.2.0"
+  resolved "git://github.com/npm-opam/react.git#4870dc6320c332cd2e0b47ec6241ce1ad6099bca"
+  dependencies:
+    "@opam-alpha/ocamlbuild" "*"
+    "@opam-alpha/ocamlfind" "*"
+    dependency-env "https://github.com/npm-ml/dependency-env.git"
+    nopam "https://github.com/yunxing/nopam.git"
+    opam-installer-bin "https://github.com/yunxing/opam-installer-bin.git"
+    substs "https://github.com/yunxing/substs.git"
+
+resolve@^1.1.7:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.2.0.tgz#9589c3f2f6149d1417a40becc1663db6ec6bc26c"
+
+"substs@https://github.com/yunxing/substs.git":
+  version "0.0.1"
+  resolved "https://github.com/yunxing/substs.git#d173c906e696d96a59fbbedce6a62de581763e96"

@@ -16,25 +16,30 @@ Description:
 Library statechart
   Path:         src/lib
   Findlibname:  statechart
-  BuildDepends: statechart_format
   Modules:      Statechart
 
 Library statechart_analyzer
   Path:         src/analyzer
   Findlibname:  statechart_analyzer
-  BuildDepends: statechart_format
+  BuildDepends: statechart
   Modules:      Statechart_analyzer
 
 Library statechart_format
   Path:         src/format
   Findlibname:  statechart_format
-  Modules:      Statechart_format,
-                Statechart_format_runtime
+  BuildDepends: statechart
+  Modules:      Statechart_format
+
+Library statechart_interpreter
+  Path:         src/interpreter
+  Findlibname:  statechart_interpreter
+  BuildDepends: statechart
+  Modules:      Statechart_interpreter
 
 Library statechart_scxml
   Path:         src/scxml
   Findlibname:  statechart_scxml
-  BuildDepends: statechart_analyzer, lambdasoup (>= 0.6.0), markup (>= 0.7.0)
+  BuildDepends: statechart, statechart_analyzer, lambdasoup (>= 0.6.0), markup (>= 0.7.0)
   Modules:      Statechart_scxml
 
 Executable statechart-scxml

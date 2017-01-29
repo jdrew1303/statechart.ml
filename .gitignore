@@ -22,5 +22,6 @@ setup.log
 *.docdir
 
 # bucklescript generated files
-lib
-node_modules
+/lib
+/node_modules
+*.log
