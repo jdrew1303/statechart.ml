@@ -1,12 +1,12 @@
 module Piqirun = Statechart_format_runtime
 
-module rec Statechart_piqi:
+module rec Statechart_format_piqi:
   sig
     type float64 = float
     type uint = int
-    type float = Statechart_piqi.float64
+    type float = Statechart_format_piqi.float64
     type binary = string
-    type ref = Statechart_piqi.uint
+    type ref = Statechart_format_piqi.uint
     type binding =
       [
         | `early
@@ -35,21 +35,21 @@ module rec Statechart_piqi:
       [
         | `bool of bool
         | `int of int
-        | `float of Statechart_piqi.float
+        | `float of Statechart_format_piqi.float
         | `string of string
-        | `binary of Statechart_piqi.binary
-        | `assign of Statechart_piqi.assign
-        | `foreach of Statechart_piqi.foreach
-        | `case of Statechart_piqi.case
-        | `log of Statechart_piqi.log
-        | `raise of Statechart_piqi.raise
-        | `var of Statechart_piqi.var
+        | `binary of Statechart_format_piqi.binary
+        | `assign of Statechart_format_piqi.assign
+        | `foreach of Statechart_format_piqi.foreach
+        | `case of Statechart_format_piqi.case
+        | `log of Statechart_format_piqi.log
+        | `raise of Statechart_format_piqi.raise
+        | `var of Statechart_format_piqi.var
       ]
     type content =
       [
         | `string of string
         | expression
-        | `document of Statechart_piqi.document
+        | `document of Statechart_format_piqi.document
       ]
     type document = Document.t
     type state = State.t
@@ -63,106 +63,106 @@ module rec Statechart_piqi:
     type log = Log.t
     type raise = Raise.t
     type var = Var.t
-  end = Statechart_piqi
+  end = Statechart_format_piqi
 and Document:
   sig
     type t = {
       mutable name: string option;
-      mutable binding: Statechart_piqi.binding;
-      mutable datamodel: Statechart_piqi.param list;
+      mutable binding: Statechart_format_piqi.binding;
+      mutable datamodel: Statechart_format_piqi.param list;
       mutable initial: bool;
-      mutable states: Statechart_piqi.state list;
+      mutable states: Statechart_format_piqi.state list;
     }
   end = Document
 and State:
   sig
     type t = {
-      mutable idx: Statechart_piqi.ref;
-      mutable depth: Statechart_piqi.uint;
-      mutable priority: Statechart_piqi.uint;
+      mutable idx: Statechart_format_piqi.ref;
+      mutable depth: Statechart_format_piqi.uint;
+      mutable priority: Statechart_format_piqi.uint;
       mutable id: string option;
-      mutable type_: Statechart_piqi.state_type;
-      mutable initial_states: Statechart_piqi.ref list;
-      mutable transitions: Statechart_piqi.transition list;
-      mutable invocations: Statechart_piqi.invoke list;
-      mutable on_enter: Statechart_piqi.expression list;
-      mutable on_exit: Statechart_piqi.expression list;
-      mutable children: Statechart_piqi.ref list;
-      mutable parent: Statechart_piqi.ref option;
-      mutable ancestors: Statechart_piqi.ref list;
-      mutable descendants: Statechart_piqi.ref list;
-      mutable history: Statechart_piqi.ref option;
-      mutable history_type: Statechart_piqi.history_type option;
+      mutable type_: Statechart_format_piqi.state_type;
+      mutable initial_states: Statechart_format_piqi.ref list;
+      mutable transitions: Statechart_format_piqi.transition list;
+      mutable invocations: Statechart_format_piqi.invoke list;
+      mutable on_enter: Statechart_format_piqi.expression list;
+      mutable on_exit: Statechart_format_piqi.expression list;
+      mutable children: Statechart_format_piqi.ref list;
+      mutable parent: Statechart_format_piqi.ref option;
+      mutable ancestors: Statechart_format_piqi.ref list;
+      mutable descendants: Statechart_format_piqi.ref list;
+      mutable history: Statechart_format_piqi.ref option;
+      mutable history_type: Statechart_format_piqi.history_type option;
     }
   end = State
 and Transition:
   sig
     type t = {
-      mutable scope: Statechart_piqi.ref;
-      mutable depth: Statechart_piqi.uint;
-      mutable priority: Statechart_piqi.uint;
-      mutable source: Statechart_piqi.ref option;
-      mutable targets: Statechart_piqi.ref list;
+      mutable scope: Statechart_format_piqi.ref;
+      mutable depth: Statechart_format_piqi.uint;
+      mutable priority: Statechart_format_piqi.uint;
+      mutable source: Statechart_format_piqi.ref option;
+      mutable targets: Statechart_format_piqi.ref list;
       mutable events: string list;
-      mutable condition: Statechart_piqi.expression option;
-      mutable type_: Statechart_piqi.transition_type;
-      mutable on_transition: Statechart_piqi.expression list;
+      mutable condition: Statechart_format_piqi.expression option;
+      mutable type_: Statechart_format_piqi.transition_type;
+      mutable on_transition: Statechart_format_piqi.expression list;
     }
   end = Transition
 and Invoke:
   sig
     type t = {
-      mutable type_: Statechart_piqi.expression option;
-      mutable src: Statechart_piqi.expression option;
-      mutable id: Statechart_piqi.expression option;
-      mutable namelist: Statechart_piqi.var list;
+      mutable type_: Statechart_format_piqi.expression option;
+      mutable src: Statechart_format_piqi.expression option;
+      mutable id: Statechart_format_piqi.expression option;
+      mutable namelist: Statechart_format_piqi.var list;
       mutable autoforward: bool;
-      mutable params: Statechart_piqi.param list;
-      mutable content: Statechart_piqi.content option;
-      mutable on_exit: Statechart_piqi.expression list;
+      mutable params: Statechart_format_piqi.param list;
+      mutable content: Statechart_format_piqi.content option;
+      mutable on_exit: Statechart_format_piqi.expression list;
     }
   end = Invoke
 and Param:
   sig
     type t = {
       mutable id: string;
-      mutable expression: Statechart_piqi.expression option;
+      mutable expression: Statechart_format_piqi.expression option;
     }
   end = Param
 and Assign:
   sig
     type t = {
       mutable id: string;
-      mutable expression: Statechart_piqi.expression option;
+      mutable expression: Statechart_format_piqi.expression option;
     }
   end = Assign
 and Foreach:
   sig
     type t = {
-      mutable array: Statechart_piqi.expression;
-      mutable item: Statechart_piqi.var option;
-      mutable index: Statechart_piqi.var option;
-      mutable expressions: Statechart_piqi.expression list;
+      mutable array: Statechart_format_piqi.expression;
+      mutable item: Statechart_format_piqi.var option;
+      mutable index: Statechart_format_piqi.var option;
+      mutable expressions: Statechart_format_piqi.expression list;
     }
   end = Foreach
 and Case:
   sig
     type t = {
-      mutable clauses: Statechart_piqi.case_clause list;
+      mutable clauses: Statechart_format_piqi.case_clause list;
     }
   end = Case
 and Case_clause:
   sig
     type t = {
-      mutable clause: Statechart_piqi.expression;
-      mutable body: Statechart_piqi.expression;
+      mutable clause: Statechart_format_piqi.expression;
+      mutable body: Statechart_format_piqi.expression;
     }
   end = Case_clause
 and Log:
   sig
     type t = {
       mutable label: string option;
-      mutable expression: Statechart_piqi.expression option;
+      mutable expression: Statechart_format_piqi.expression option;
     }
   end = Log
 and Raise:
@@ -369,7 +369,7 @@ and parse_content x =
     | 1 ->
         let res = parse_string x in
         `string res
-    | 2 -> (parse_expression x :> Statechart_piqi.content)
+    | 2 -> (parse_expression x :> Statechart_format_piqi.content)
     | 3 ->
         let res = parse_document x in
         `document res
@@ -611,14 +611,14 @@ and gen__param code x =
   let _expression = Piqirun.gen_optional_field 2 gen__expression x.Param.expression in
   Piqirun.gen_record code (_id :: _expression :: [])
 
-and gen__content code (x:Statechart_piqi.content) =
+and gen__content code (x:Statechart_format_piqi.content) =
   Piqirun.gen_record code [(match x with
     | `string x -> gen__string 1 x
-    | (#Statechart_piqi.expression as x) -> gen__expression 2 x
+    | (#Statechart_format_piqi.expression as x) -> gen__expression 2 x
     | `document x -> gen__document 3 x
   )]
 
-and gen__expression code (x:Statechart_piqi.expression) =
+and gen__expression code (x:Statechart_format_piqi.expression) =
   Piqirun.gen_record code [(match x with
     | `bool x -> gen__bool 1 x
     | `int x -> gen__int 2 x
@@ -801,4 +801,4 @@ and default_var () =
   }
 
 
-include Statechart_piqi
+include Statechart_format_piqi
