@@ -22,7 +22,8 @@ Library statechart_analyzer
   Path:         src/analyzer
   Findlibname:  statechart_analyzer
   BuildDepends: statechart
-  Modules:      Statechart_analyzer
+  Modules:      Statechart_analyzer,
+                Statechart_analyzer_types
 
 Library statechart_format
   Path:         src/format

@@ -1,2 +1,1 @@
-let hello =
-  "world"
+open Statechart_analyzer_types
