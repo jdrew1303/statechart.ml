@@ -3,17 +3,17 @@ open Statechart_event
 
 type configuration = state list
 
-module EnterTransition = struct
-  type t = transition
-  let compare = Statechart.compare_transition
+module EnterState = struct
+  type t = state
+  let compare = Statechart.compare_state
 end
-module EnterTransitions = Set.Make(EnterTransition)
+module EnterStates = Set.Make(EnterState)
 
-module ExitTransition = struct
-  type t = transition
-  let compare = Statechart.compare_transition_reverse
+module ExitState = struct
+  type t = state
+  let compare = Statechart.compare_state_reverse
 end
-module ExitTransitions = Set.Make(ExitTransition)
+module ExitStates = Set.Make(ExitState)
 
 module type ContextType =
   sig
@@ -41,8 +41,85 @@ let resolve doc idx =
 let compute_exit_set doc transitions conf =
   [], conf
 
+let has_processed_children doc state processed =
+  List.exists (fun idx -> EnterStates.mem (resolve doc idx) processed) state.State.children
+
+let query_ancestors doc target scope =
+  []
+
+let rec add_state_and_ancestors doc history scope acc target =
+  let state = resolve doc target in
+  let acc = add_descendants doc history state acc in
+  maybe_add_ancestors doc history scope acc state.State.ancestors
+
+and maybe_add_ancestors doc history scope acc ancestors =
+  match ancestors with
+  | anc :: ancestors when anc != scope ->
+    add_state_and_ancestors doc history scope acc anc
+  | _ -> acc
+
+and add_descendants doc history state acc =
+  let states, conf, processed = acc in
+  match EnterStates.mem state processed with
+  | true -> acc
+  | false -> add_descendants_dispatch doc history state acc
+
+and add_descendants_dispatch doc history state acc =
+  let states, conf, processed = acc in
+  let processed = EnterStates.add state processed in
+  let acc = states, conf, processed in
+  match state.State.type_ with
+  | `history -> add_history_descendants doc history state acc
+  | `parallel -> add_parallel_descendants doc history state acc
+  | `composite -> add_composite_descendants doc history state acc
+  | _ -> add_other_descendants doc history state acc
+
+and add_history_descendants doc history state acc =
+  (* TODO *)
+  (* let states, conf, processed = acc in *)
+  acc
+
+and add_parallel_descendants doc history state acc =
+  let states, conf, processed = acc in
+  let states = EnterStates.add state states in
+  let acc = states, conf, processed in
+  List.fold_left (add_parallel_descendants_child doc history) acc state.State.children
+
+and add_parallel_descendants_child doc history acc idx =
+  let child = resolve doc idx in
+  match child.State.type_ with
+  | `history -> acc
+  | _ -> add_descendants doc history child acc
+
+and add_composite_descendants doc history state acc =
+  let states, conf, processed = acc in
+  let states = EnterStates.add state states in
+  let acc = states, conf, processed in
+  match has_processed_children doc state processed with
+  | true -> acc
+  | _ ->
+    match state.State.initial_state with
+    | Some idx ->
+      let initial = resolve doc idx in
+      add_descendants doc history initial acc
+    | None ->
+      acc
+
+and add_other_descendants doc history state acc =
+  let states, conf, processed = acc in
+  let states = EnterStates.add state states in
+  let conf = state :: conf in
+  states, conf, processed
+
 let compute_entry_set doc history transitions conf =
-  [], conf
+  let init = EnterStates.empty, conf, EnterStates.empty in
+  let enter_state acc transition =
+    let targets = transition.Transition.targets in
+    let scope = transition.Transition.scope in
+    List.fold_left (add_state_and_ancestors doc history scope) acc targets
+  in
+  let states, conf, _ = List.fold_left enter_state init transitions in
+  states, conf
 
 module Make(Ctx : ContextType) =
   struct
@@ -81,7 +158,7 @@ module Make(Ctx : ContextType) =
 
     let start context doc =
       let conf          = [] in
-      let initial       = [doc.Document.initial_transition] in
+      let initial       = doc.Document.initial_transitions in
       let context, conf = enter_states context doc initial conf in
       Ctx.update_configuration context conf
 

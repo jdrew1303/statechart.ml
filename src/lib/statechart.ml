@@ -86,10 +86,8 @@ and Document:
   sig
     type t = {
       name: string option;
-      binding: TYPES.document_binding;
-      initial_transition: TYPES.transition;
+      initial_transitions: TYPES.transition list;
       states: TYPES.state array;
-      datamodel: TYPES.param list;
     }
   end = Document
 and Foreach:
@@ -142,7 +140,7 @@ and State:
       priority: TYPES.uint;
       id: string option;
       type_: TYPES.state_type;
-      initial_states: TYPES.ref list;
+      initial_state: TYPES.ref option;
       transitions: TYPES.transition list;
       invocations: TYPES.invoke list;
       on_enter: TYPES.expression list;
@@ -185,6 +183,12 @@ let compare_state s1 s2 =
   | d1, d2 when d1 = d2 -> Pervasives.compare s1.State.priority s2.State.priority
   | d1, d2 when d1 >= d2 -> 1
   | _ -> -1
+
+let compare_state_reverse t1 t2 =
+  match t2.State.depth, t1.State.depth with
+  | d1, d2 when d1 = d2 -> Pervasives.compare t2.State.priority t1.State.priority
+  | d1, d2 when d1 >= d2 -> -1
+  | _ -> 1
 
 let compare_transition t1 t2 =
   match t1.Transition.depth, t2.Transition.depth with

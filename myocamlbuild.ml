@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: dac38b6592daea7380a776f062900cf8) *)
+(* DO NOT EDIT (digest: 7947590814b11b065194ba5fddf9f3d2) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -899,7 +899,7 @@ let package_default =
        [
           ("test", ["src/lib"]);
           ("src/scxml_cli", ["src/scxml"]);
-          ("src/scxml", ["src/analyzer"; "src/lib"]);
+          ("src/scxml", ["src/analyzer"; "src/format"; "src/lib"]);
           ("src/interpreter", ["src/lib"]);
           ("src/format", ["src/lib"]);
           ("src/analyzer", ["src/lib"])

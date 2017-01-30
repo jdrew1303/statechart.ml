@@ -60,31 +60,16 @@ and parse_content x =
         `document res
     | _ -> Piqirun.error_variant x code
 
-and parse_document_binding x =
-  match Piqirun.int32_of_signed_varint x with
-    | 1l -> `early
-    | 2l -> `late
-    | x -> Piqirun.error_enum_const x
-and packed_parse_document_binding x =
-  match Piqirun.int32_of_packed_signed_varint x with
-    | 1l -> `early
-    | 2l -> `late
-    | x -> Piqirun.error_enum_const x
-
 and parse_document x =
   let x = Piqirun.parse_record x in
   let _name, x = Piqirun.parse_optional_field 1 parse_string x in
-  let _binding, x = Piqirun.parse_required_field 2 parse_document_binding x ~default:"\b\001" in
-  let _initial_transition, x = Piqirun.parse_required_field 3 parse_transition x in
-  let _states, x = Piqirun.parse_repeated_field 4 parse_state x in
-  let _datamodel, x = Piqirun.parse_repeated_field 5 parse_param x in
+  let _initial_transitions, x = Piqirun.parse_repeated_field 2 parse_transition x in
+  let _states, x = Piqirun.parse_repeated_field 3 parse_state x in
   Piqirun.check_unparsed_fields x;
   {
     Document.name = _name;
-    Document.binding = _binding;
-    Document.initial_transition = _initial_transition;
+    Document.initial_transitions = _initial_transitions;
     Document.states = Array.of_list _states;
-    Document.datamodel = _datamodel;
   }
 
 and parse_expression x =
@@ -199,7 +184,7 @@ and parse_state x =
   let _priority, x = Piqirun.parse_required_field 3 parse_uint x in
   let _id, x = Piqirun.parse_optional_field 4 parse_string x in
   let _type_, x = Piqirun.parse_required_field 5 parse_state_type x ~default:"\b\001" in
-  let _initial_states, x = Piqirun.parse_repeated_field 6 parse_ref x in
+  let _initial_state, x = Piqirun.parse_optional_field 6 parse_ref x in
   let _transitions, x = Piqirun.parse_repeated_field 7 parse_transition x in
   let _invocations, x = Piqirun.parse_repeated_field 8 parse_invoke x in
   let _on_enter, x = Piqirun.parse_repeated_field 9 parse_expression x in
@@ -217,7 +202,7 @@ and parse_state x =
     State.priority = _priority;
     State.id = _id;
     State.type_ = _type_;
-    State.initial_states = _initial_states;
+    State.initial_state = _initial_state;
     State.transitions = _transitions;
     State.invocations = _invocations;
     State.on_enter = _on_enter;
@@ -344,24 +329,11 @@ and gen__content code (x:Statechart.content) =
     | `document x -> gen__document 3 x
   )]
 
-and gen__document_binding code x =
-  Piqirun.int32_to_signed_varint code (match x with
-    | `early -> 1l
-    | `late -> 2l
-  )
-and packed_gen__document_binding x =
-  Piqirun.int32_to_packed_signed_varint (match x with
-    | `early -> 1l
-    | `late -> 2l
-  )
-
 and gen__document code x =
   let _name = Piqirun.gen_optional_field 1 gen__string x.Document.name in
-  let _binding = Piqirun.gen_required_field 2 gen__document_binding x.Document.binding in
-  let _initial_transition = Piqirun.gen_required_field 3 gen__transition x.Document.initial_transition in
-  let _states = Piqirun.gen_repeated_field 4 gen__state (Array.to_list x.Document.states) in
-  let _datamodel = Piqirun.gen_repeated_field 5 gen__param x.Document.datamodel in
-  Piqirun.gen_record code (_name :: _binding :: _initial_transition :: _states :: _datamodel :: [])
+  let _initial_transitions = Piqirun.gen_repeated_field 2 gen__transition x.Document.initial_transitions in
+  let _states = Piqirun.gen_repeated_field 3 gen__state (Array.to_list x.Document.states) in
+  Piqirun.gen_record code (_name :: _initial_transitions :: _states :: [])
 
 and gen__expression code (x:Statechart.expression) =
   Piqirun.gen_record code [(match x with
@@ -419,7 +391,7 @@ and gen__state code x =
   let _priority = Piqirun.gen_required_field 3 gen__uint x.State.priority in
   let _id = Piqirun.gen_optional_field 4 gen__string x.State.id in
   let _type_ = Piqirun.gen_required_field 5 gen__state_type x.State.type_ in
-  let _initial_states = Piqirun.gen_repeated_field 6 gen__ref x.State.initial_states in
+  let _initial_state = Piqirun.gen_optional_field 6 gen__ref x.State.initial_state in
   let _transitions = Piqirun.gen_repeated_field 7 gen__transition x.State.transitions in
   let _invocations = Piqirun.gen_repeated_field 8 gen__invoke x.State.invocations in
   let _on_enter = Piqirun.gen_repeated_field 9 gen__expression x.State.on_enter in
@@ -430,7 +402,7 @@ and gen__state code x =
   let _descendants = Piqirun.gen_repeated_field 14 gen__ref x.State.descendants in
   let _history = Piqirun.gen_optional_field 15 gen__ref x.State.history in
   let _history_type = Piqirun.gen_optional_field 16 gen__history_type x.State.history_type in
-  Piqirun.gen_record code (_idx :: _depth :: _priority :: _id :: _type_ :: _initial_states :: _transitions :: _invocations :: _on_enter :: _on_exit :: _children :: _parent :: _ancestors :: _descendants :: _history :: _history_type :: [])
+  Piqirun.gen_record code (_idx :: _depth :: _priority :: _id :: _type_ :: _initial_state :: _transitions :: _invocations :: _on_enter :: _on_exit :: _children :: _parent :: _ancestors :: _descendants :: _history :: _history_type :: [])
 
 and gen__state_type code x =
   Piqirun.int32_to_signed_varint code (match x with
@@ -501,7 +473,6 @@ let gen_assign x = gen__assign (-1) x
 let gen_case x = gen__case (-1) x
 let gen_case_clause x = gen__case_clause (-1) x
 let gen_content x = gen__content (-1) x
-let gen_document_binding x = gen__document_binding (-1) x
 let gen_document x = gen__document (-1) x
 let gen_expression x = gen__expression (-1) x
 let gen_foreach x = gen__foreach (-1) x
@@ -540,14 +511,11 @@ and default_case_clause () =
     Case_clause.body = default_expression ();
   }
 and default_content () = `string (default_string ())
-and default_document_binding () = `early
 and default_document () =
   {
     Document.name = None;
-    Document.binding = parse_document_binding (Piqirun.parse_default "\b\001");
-    Document.initial_transition = default_transition ();
+    Document.initial_transitions = [];
     Document.states = [| |];
-    Document.datamodel = [];
   }
 and default_expression () = `bool (default_bool ())
 and default_foreach () =
@@ -590,7 +558,7 @@ and default_state () =
     State.priority = default_uint ();
     State.id = None;
     State.type_ = parse_state_type (Piqirun.parse_default "\b\001");
-    State.initial_states = [];
+    State.initial_state = None;
     State.transitions = [];
     State.invocations = [];
     State.on_enter = [];

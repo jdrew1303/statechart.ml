@@ -28,7 +28,8 @@ Library statechart_format
   Path:         src/format
   Findlibname:  statechart_format
   BuildDepends: statechart
-  Modules:      Statechart_format
+  Modules:      Statechart_format,
+                Statechart_format_runtime
 
 Library statechart_interpreter
   Path:         src/interpreter
@@ -39,13 +40,18 @@ Library statechart_interpreter
 Library statechart_scxml
   Path:         src/scxml
   Findlibname:  statechart_scxml
-  BuildDepends: statechart, statechart_analyzer, lambdasoup (>= 0.6.0), markup (>= 0.7.0)
+  BuildDepends: statechart,
+                statechart_analyzer,
+                statechart_format,
+                lambdasoup (>= 0.6.0),
+                markup (>= 0.7.0)
   Modules:      Statechart_scxml
 
 Executable statechart-scxml
   Path:         src/scxml_cli
   MainIs:       Main.ml
-  BuildDepends: statechart_scxml, cmdliner (>= 0.9)
+  BuildDepends: statechart_scxml,
+                cmdliner (>= 0.9)
   CompiledObject: best
 
 Document api
