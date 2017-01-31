@@ -19,40 +19,44 @@ Library statechart
   Modules:      Statechart
 
 Library statechart_analyzer
-  Path:         src/analyzer
-  Findlibname:  statechart_analyzer
-  BuildDepends: statechart
-  Modules:      Statechart_analyzer,
-                Statechart_analyzer_printer,
-                Statechart_analyzer_types
+  Path:          src/analyzer
+  Findlibname:   analyzer
+  FindlibParent: statechart
+  BuildDepends:  statechart
+  Modules:       Statechart_analyzer,
+                 Statechart_analyzer_printer,
+                 Statechart_analyzer_types
 
 Library statechart_format
-  Path:         src/format
-  Findlibname:  statechart_format
-  BuildDepends: statechart
-  Modules:      Statechart_format,
-                Statechart_format_runtime
+  Path:          src/format
+  Findlibname:   format
+  FindlibParent: statechart
+  BuildDepends:  statechart
+  Modules:       Statechart_format,
+                 Statechart_format_runtime
 
 Library statechart_interpreter
-  Path:         src/interpreter
-  Findlibname:  statechart_interpreter
-  BuildDepends: statechart
-  Modules:      Statechart_interpreter
+  Path:          src/interpreter
+  Findlibname:   interpreter
+  FindlibParent: statechart
+  BuildDepends:  statechart
+  Modules:       Statechart_interpreter
 
 Library statechart_scxml
-  Path:         src/scxml
-  Findlibname:  statechart_scxml
-  BuildDepends: statechart,
-                statechart_analyzer,
-                statechart_format,
-                core_kernel (>= 113.33.0),
-                markup (>= 0.7.0)
-  Modules:      Statechart_scxml
+  Path:          src/scxml
+  Findlibname:   scxml
+  FindlibParent: statechart
+  BuildDepends:  statechart,
+                 statechart.analyzer,
+                 statechart.format,
+                 humane_re (>= 0.1.0),
+                 markup (>= 0.7.0)
+  Modules:       Statechart_scxml
 
 Executable statechart-scxml
   Path:         src/scxml_cli
   MainIs:       Main.ml
-  BuildDepends: statechart_scxml,
+  BuildDepends: statechart.scxml,
                 cmdliner (>= 0.9)
   CompiledObject: best
 
@@ -62,7 +66,7 @@ Document api
   BuildTools+:          ocamldoc
   Install:              true
   XOCamlBuildPath:      src
-  XOCamlBuildLibraries: statechart, statechart_format, statechart_scxml
+  XOCamlBuildLibraries: statechart, statechart.format, statechart.scxml
 
 Executable test_statechart
   Path:             test

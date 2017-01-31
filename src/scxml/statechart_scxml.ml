@@ -1,5 +1,6 @@
 open Markup
 open Statechart_analyzer_types
+module Str = Humane_re.Str
 
 module Prop = struct
   type t = Markup.name * string
@@ -41,10 +42,9 @@ let get_prop_bool props name =
   | Some _ -> Some false
   | _ -> None
 
-let split_on_chars = Core_kernel.Core_string.split_on_chars
-
+let ws_re = Str.regexp "[ \t\n\r]+"
 let ws_split str =
-  let tokens = split_on_chars str ~on: [' '; '\n'; '\t'] in
+  let tokens = Str.split ws_re str in
   List.filter (fun s -> String.equal s "" |> not) tokens
 
 let map_children children =
