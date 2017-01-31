@@ -7,3 +7,5 @@ env:
 os:
   - linux
   - osx
+cache:
+  - ~/.opam

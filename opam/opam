@@ -10,7 +10,10 @@ build: [
   ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
   ["ocaml" "setup.ml" "-build"]
 ]
-install: ["ocaml" "setup.ml" "-install"]
+install: [
+  ["ocaml" "setup.ml" "-uninstall"]
+  ["ocaml" "setup.ml" "-install"]
+]
 remove: [
   ["ocaml" "setup.ml" "-uninstall"]
 ]
@@ -20,6 +23,7 @@ build-test: [
   ["ocaml" "setup.ml" "-test"]
 ]
 depends: [
+  "core_kernel" {>= 113.33.0}
   "piqilib" {>= "0.6"}
   "lambdasoup" {>= "0.6"}
   "markup" {>= "0.7"}
