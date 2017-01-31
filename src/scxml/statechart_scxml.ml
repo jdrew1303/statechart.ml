@@ -319,14 +319,18 @@ let unwrap root =
   | Some (SCEl (Document doc)) -> Some doc
   | _ -> None
 
-let from_stream stream =
-  stream
-  |> parse_xml
-  |> Markup.signals
+let from_signals signals =
+  signals
   |> tree
     ~text:(fun ss -> Text (String.concat "" ss))
     ~element:(parse_element)
   |> unwrap
+
+let from_stream stream =
+  stream
+  |> parse_xml
+  |> Markup.signals
+  |> from_signals
 
 let from_string str = from_stream (string str)
 

@@ -21,8 +21,7 @@ Library statechart
 Library statechart_analyzer
   Path:         src/analyzer
   Findlibname:  statechart_analyzer
-  BuildDepends: statechart,
-                core_kernel (>= 113.33.0)
+  BuildDepends: statechart
   Modules:      Statechart_analyzer,
                 Statechart_analyzer_printer,
                 Statechart_analyzer_types
@@ -46,7 +45,7 @@ Library statechart_scxml
   BuildDepends: statechart,
                 statechart_analyzer,
                 statechart_format,
-                lambdasoup (>= 0.6.0),
+                core_kernel (>= 113.33.0),
                 markup (>= 0.7.0)
   Modules:      Statechart_scxml
 
