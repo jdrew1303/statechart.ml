@@ -11,8 +11,8 @@ end
 module Props = Set.Make(Prop)
 
 type html = Text of string
-        | SCEl of statechart_el
-        | None
+          | SCEl of statechart_el
+          | None
 
 let get_ns_prop props ns name =
   try
@@ -146,9 +146,31 @@ let parse_raise props =
     Raise.event=get_prop props "event";
   }
 
+let finish_if_child current prev cond =
+  match current with
+  | [] -> ([], prev)
+  | _ -> let c = {CaseClause.cond=cond; children=current} in
+         ([], c :: prev)
+
+let parse_if_child current prev child =
+  match child with
+  | CaseClause {CaseClause.cond=cond} -> finish_if_child current prev cond
+  | _ -> (child :: current, prev)
+
+let rec parse_if_children current prev children =
+  match children with
+  | [] -> current, prev
+  | child :: rest ->
+    let current, prev = parse_if_child current prev child in
+    parse_if_children current prev rest
+
 let parse_if props children =
+  let rev_children = List.rev children in
+  let current, prev = parse_if_children [] [] rev_children in
+  let cond = get_prop props "cond" in
+  let _, children = finish_if_child current prev cond in
   Case {
-    Case.children=[];
+    Case.children=children;
   }
 
 let parse_if_else props =
@@ -158,8 +180,9 @@ let parse_if_else props =
   }
 
 let parse_else =
-  CaseDefault {
-    CaseDefault.children=[];
+  CaseClause {
+    CaseClause.cond=None;
+    children=[];
   }
 
 let parse_foreach props children =
@@ -271,7 +294,7 @@ let parse_element name proplist children =
     | "onexit" -> SCEl (parse_on_exit props (filter_children children))
     | "history" -> SCEl (parse_history props (filter_children children))
     | "raise" -> SCEl (parse_raise props)
-    | "if" -> SCEl (parse_if props children)
+    | "if" -> SCEl (parse_if props (filter_children children))
     | "ifelse" -> SCEl (parse_if_else props)
     | "else" -> SCEl parse_else
     | "foreach" -> SCEl (parse_foreach props (filter_children children))

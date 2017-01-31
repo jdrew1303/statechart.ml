@@ -109,6 +109,18 @@ and print_raise indent el =
   print_kv_opt "event" el.Raise.event ")";
   print_type_close indent
 
+and print_case indent el =
+  print_type "case" indent;
+  print_string ")";
+  print_newline ();
+  List.iter (print_case_clause (indent ^ "  ")) el.Case.children;
+  print_type_close indent
+
+and print_case_clause indent el =
+  print_type "clause" indent;
+  print_kv_opt_nq "cond" el.CaseClause.cond ")";
+  print_children indent el.CaseClause.children
+
 and print_foreach indent el =
   print_string (indent ^ "each ");
   print_opt el.Foreach.item "$$item";
@@ -209,9 +221,8 @@ and print_el indent el =
   | History e -> print_history indent e
 
   | Raise e -> print_raise indent e
-  | Case _ -> prerr_endline "UNHANDLED"
-  | CaseClause _ -> prerr_endline "UNHANDLED"
-  | CaseDefault _ -> prerr_endline "UNHANDLED"
+  | Case e -> print_case indent e
+  | CaseClause e -> print_case_clause indent e
   | Foreach e -> print_foreach indent e
   | Log e -> print_log indent e
 

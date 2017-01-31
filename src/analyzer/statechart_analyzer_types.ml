@@ -30,7 +30,6 @@ module rec TYPES:
     type raise = Raise.t
     type case = Case.t
     type case_clause = CaseClause.t
-    type case_default = CaseDefault.t
     type foreach = Foreach.t
     type log = Log.t
     (* Data Model *)
@@ -61,7 +60,6 @@ module rec TYPES:
       | Raise of raise
       | Case of case
       | CaseClause of case_clause
-      | CaseDefault of case_default
       | Foreach of foreach
       | Log of log
 
@@ -167,12 +165,6 @@ and CaseClause:
       children: TYPES.statechart_el list;
     }
   end = CaseClause
-and CaseDefault:
-  sig
-    type t = {
-      children: TYPES.statechart_el list;
-    }
-  end = CaseDefault
 and Foreach:
   sig
     type t = {
