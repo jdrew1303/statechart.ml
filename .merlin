@@ -1,4 +1,4 @@
 S src/**
 B _build/**
 
-PKG alcotest cmdliner lambdasoup markup
+PKG alcotest cmdliner core_kernel lambdasoup markup
