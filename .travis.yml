@@ -6,6 +6,5 @@ env:
   - OCAML_VERSION=4.04
 os:
   - linux
-  - osx
 cache:
   - ~/.opam
