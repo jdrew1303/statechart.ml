@@ -1,8 +1,13 @@
+module IntSet = Set.Make(struct
+  type t = int
+  let compare = compare
+end)
+
 module type Engine = sig
   type t
   type executable
   type ref = int
-  type configuration = ref list
+  type configuration = IntSet.t
   type event = string
   type history = int list
 
@@ -79,18 +84,18 @@ module type Engine = sig
         invocations: TYPES.invoke list;
         on_enter: executable list;
         on_exit: executable list;
-        children: ref list;
+        children: IntSet.t;
         parent: ref option;
-        ancestors: ref list;
-        descendants: ref list;
-        history: ref option;
+        ancestors: IntSet.t;
+        descendants: IntSet.t;
+        history: ref list;
         history_type: TYPES.history_type option;
       }
     end
   and Transition:
     sig
       type t = {
-        scope: ref;
+        domain: ref;
         depth: int;
         order: int;
         source: ref option;
@@ -122,7 +127,4 @@ module type Engine = sig
   val cancel : t -> TYPES.invoke -> t
   val remember : t -> int -> history -> t
   val recall : t -> int -> history
-
-  val set_configuration : t -> configuration -> t
-  val get_configuration : t -> configuration
 end

@@ -5,9 +5,12 @@ module type Interpreter = sig
   type configuration
   type document
   type executable
-  val start : t -> document -> t
-  val stop : t -> document -> t
-  (* val handle_internal_event : document -> *)
+  type event
+  val start : t -> document -> t * configuration
+  val handle_internal_event : t -> document -> configuration -> event -> t * configuration
+  val handle_external_event : t -> document -> configuration -> event -> t * configuration
+  val finalize_macrostep : t -> document -> configuration -> t
+  val stop : t -> document -> configuration -> t
 end
 
 module Make(Eng : Engine) = struct
@@ -43,32 +46,12 @@ module Make(Eng : Engine) = struct
       | _ -> -1
   end)
 
-  let resolve doc = Array.get doc.Document.states
-  let resolve_list doc = List.map (resolve doc)
-
-  (*
-  procedure exitInterpreter()
-
-  The purpose of this procedure is to exit the current SCXML process by exiting all active states. If the machine is in a top-level final state, a Done event is generated. (Note that in this case, the final state will be the only active state.) The implementation of returnDoneEvent is platform-dependent, but if this session is the result of an <invoke> in another SCXML session, returnDoneEvent will cause the event done.invoke.<id> to be placed in the external event queue of that session, where <id> is the id generated in that session when the <invoke> was executed.
-
-  procedure exitInterpreter():
-      statesToExit = configuration.toList().sort(exitOrder)
-      for s in statesToExit:
-          for content in s.onexit.sort(documentOrder):
-              executeContent(content)
-          for inv in s.invoke:
-              cancelInvoke(inv)
-          configuration.delete(s)
-          if isFinalState(s) and isScxmlElement(s.parent):
-              returnDoneEvent(s.donedata)
-  *)
-
-  let exit_interpreter engine doc =
-    List.fold_left (fun engine idx ->
-      let state = resolve doc idx in
-      let engine = List.fold_left Eng.execute engine state.State.on_exit in
-      List.fold_left Eng.cancel engine state.State.invocations
-    ) engine (Eng.get_configuration engine)
+  let resolve doc idx = Array.get doc.Document.states idx
+  let resolve_list doc list = List.map (resolve doc) list
+  let resolve_set doc set =
+    IntSet.fold (fun idx acc ->
+      EnterStates.add (resolve doc idx) acc
+    ) set EnterStates.empty
 
   (*
   function removeConflictingTransitions(enabledTransitions)
@@ -104,19 +87,21 @@ module Make(Eng : Engine) = struct
 
   let query_transitions filter engine doc conf =
     let f = filter engine in
-    let t = List.fold_left (fun acc idx ->
+    let t = IntSet.fold (fun idx acc ->
       let state = resolve doc idx in
-      match state with
-      | {State.children=[]; ancestors=ancs} -> (* atomic state *)
-        List.fold_left (fun acc state ->
+      if IntSet.is_empty state.State.children
+      then (
+        let ancs = state.State.children in
+        EnterStates.fold (fun state acc ->
           try
             let transition = List.find f state.State.transitions in
             TransitionSet.add transition acc
           with
           | _ -> acc
-        ) acc (state :: resolve_list doc ancs)
-      | _ -> acc
-    ) TransitionSet.empty, conf in
+        ) (EnterStates.add state (resolve_set doc ancs)) acc
+      )
+      else acc
+    ) conf TransitionSet.empty in
     remove_conflicting_transitions doc t
 
   (*
@@ -137,13 +122,13 @@ module Make(Eng : Engine) = struct
       return enabledTransitions
   *)
 
-  let select_eventless_transitions =
+  let select_eventless_transitions engine doc conf =
     query_transitions (fun engine transition ->
       match transition with
       | {Transition.events=[]; condition=Some cond} -> Eng.query engine cond
       | {Transition.events=[]; condition=None} -> true
       | _ -> false
-    )
+    ) engine doc conf
 
   (*
   function selectTransitions(event)
@@ -165,13 +150,13 @@ module Make(Eng : Engine) = struct
       return enabledTransitions
   *)
 
-  let select_transitions event =
+  let select_transitions engine doc conf event =
     query_transitions (fun engine transition ->
       match transition with
       | {Transition.events=[]} -> false
       | {Transition.events=events; condition=Some cond} -> (Eng.match_event events event) && (Eng.query engine cond)
       | {Transition.events=events; condition=None} -> Eng.match_event events event
-    )
+    ) engine doc conf
 
   (*
   procedure computeExitSet(enabledTransitions)
@@ -189,17 +174,20 @@ module Make(Eng : Engine) = struct
       return statesToExit
   *)
 
-  (* let compute_exit_set doc enabled =
-    List.fold_left (fun acc transition ->
+  let compute_exit_set doc conf enabled =
+    TransitionSet.fold (fun transition acc ->
       match transition with
       | {Transition.targets=[]} -> acc
-      | {Transition.targets=targets; scope=scope; descendants=desc} ->
+      | {Transition.targets=targets; domain=domain} ->
         List.fold_left (fun acc target ->
-          if List.mem target
+          IntSet.fold (fun idx acc ->
+            let state = resolve doc idx in
+            if IntSet.mem domain state.State.descendants
+            then ExitStates.add state acc
+            else acc
+          ) conf acc
         ) acc targets
-    ) ExitStates.empty enabled *)
-
-  (* TODO *)
+    ) enabled ExitStates.empty
 
   (*
   procedure exitStates(enabledTransitions)
@@ -228,7 +216,29 @@ module Make(Eng : Engine) = struct
           configuration.delete(s)
   *)
 
-  (* TODO *)
+  let remember_history engine conf to_exit =
+    ExitStates.fold (fun state acc ->
+      match state with
+      | {State.history=hist; history_type=Some `deep} ->
+        (* TODO *)
+        acc
+      | {State.history=hist; history_type=Some `shallow} ->
+        (* TODO *)
+        acc
+      | _ ->
+        acc
+    ) to_exit engine
+
+  let exit_states engine doc conf enabled =
+    let to_exit = compute_exit_set doc conf enabled in
+    let engine = remember_history engine conf to_exit in
+    ExitStates.fold (fun state acc ->
+      let engine, new_conf = acc in
+      let engine = List.fold_left Eng.execute engine state.State.on_exit in
+      let engine = List.fold_left Eng.cancel engine state.State.invocations in
+      let new_conf = IntSet.remove state.State.idx new_conf in
+      engine, new_conf
+    ) to_exit (engine, conf)
 
   (*
   procedure executeTransitionContent(enabledTransitions)
@@ -240,47 +250,10 @@ module Make(Eng : Engine) = struct
           executeContent(t)
   *)
 
-  let execute_transitions engine enabled =
+  let execute_transition_content engine enabled =
     TransitionSet.fold (fun transition acc ->
       List.fold_left Eng.execute acc transition.Transition.on_transition
-    ) engine enabled
-
-  (*
-  procedure enterStates(enabledTransitions)
-
-  First, compute the list of all the states that will be entered as a result of taking the transitions in enabledTransitions. Add them to statesToInvoke so that invoke processing can be done at the start of the next macrostep. Convert statesToEnter to a list and sort it in entryOrder. For each state s in the list, first add s to the current configuration. Then if we are using late binding, and this is the first time we have entered s, initialize its data model. Then execute any onentry handlers. If s's initial state is being entered by default, execute any executable content in the initial transition. If a history state in s was the target of a transition, and s has not been entered before, execute the content inside the history state's default transition. Finally, if s is a final state, generate relevant Done events. If we have reached a top-level final state, set running to false as a signal to stop processing.
-
-  procedure enterStates(enabledTransitions):
-      statesToEnter = new OrderedSet()
-      statesForDefaultEntry = new OrderedSet()
-      // initialize the temporary table for default content in history states
-      defaultHistoryContent = new HashTable()
-      computeEntrySet(enabledTransitions, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
-      for s in statesToEnter.toList().sort(entryOrder):
-          configuration.add(s)
-          statesToInvoke.add(s)
-          if binding == "late" and s.isFirstEntry:
-              initializeDataModel(datamodel.s,doc.s)
-              s.isFirstEntry = false
-          for content in s.onentry.sort(documentOrder):
-              executeContent(content)
-          if statesForDefaultEntry.isMember(s):
-              executeContent(s.initial.transition)
-          if defaultHistoryContent[s.id]:
-              executeContent(defaultHistoryContent[s.id])
-          if isFinalState(s):
-              if isSCXMLElement(s.parent):
-                  running = false
-              else:
-                  parent = s.parent
-                  grandparent = parent.parent
-                  internalQueue.enqueue(new Event("done.state." + parent.id, s.donedata))
-                  if isParallelState(grandparent):
-                      if getChildStates(grandparent).every(isInFinalState):
-                          internalQueue.enqueue(new Event("done.state." + grandparent.id))
-  *)
-
-  (* TODO *)
+    ) enabled engine
 
   (*
   procedure computeEntrySet(transitions, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
@@ -352,6 +325,45 @@ module Make(Eng : Engine) = struct
   (* TODO *)
 
   (*
+  procedure enterStates(enabledTransitions)
+
+  First, compute the list of all the states that will be entered as a result of taking the transitions in enabledTransitions. Add them to statesToInvoke so that invoke processing can be done at the start of the next macrostep. Convert statesToEnter to a list and sort it in entryOrder. For each state s in the list, first add s to the current configuration. Then if we are using late binding, and this is the first time we have entered s, initialize its data model. Then execute any onentry handlers. If s's initial state is being entered by default, execute any executable content in the initial transition. If a history state in s was the target of a transition, and s has not been entered before, execute the content inside the history state's default transition. Finally, if s is a final state, generate relevant Done events. If we have reached a top-level final state, set running to false as a signal to stop processing.
+
+  procedure enterStates(enabledTransitions):
+      statesToEnter = new OrderedSet()
+      statesForDefaultEntry = new OrderedSet()
+      // initialize the temporary table for default content in history states
+      defaultHistoryContent = new HashTable()
+      computeEntrySet(enabledTransitions, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
+      for s in statesToEnter.toList().sort(entryOrder):
+          configuration.add(s)
+          statesToInvoke.add(s)
+          if binding == "late" and s.isFirstEntry:
+              initializeDataModel(datamodel.s,doc.s)
+              s.isFirstEntry = false
+          for content in s.onentry.sort(documentOrder):
+              executeContent(content)
+          if statesForDefaultEntry.isMember(s):
+              executeContent(s.initial.transition)
+          if defaultHistoryContent[s.id]:
+              executeContent(defaultHistoryContent[s.id])
+          if isFinalState(s):
+              if isSCXMLElement(s.parent):
+                  running = false
+              else:
+                  parent = s.parent
+                  grandparent = parent.parent
+                  internalQueue.enqueue(new Event("done.state." + parent.id, s.donedata))
+                  if isParallelState(grandparent):
+                      if getChildStates(grandparent).every(isInFinalState):
+                          internalQueue.enqueue(new Event("done.state." + grandparent.id))
+  *)
+
+  (* TODO *)
+  let enter_states engine doc conf transitions =
+    engine, conf
+
+  (*
   procedure microstep(enabledTransitions)
 
   The purpose of the microstep procedure is to process a single set of transitions. These may have been enabled by an external event, an internal event, or by the presence or absence of certain values in the data model at the current point in time. The processing of the enabled transitions must be done in parallel ('lock step') in the sense that their source states must first be exited, then their actions must be executed, and finally their target states entered.
@@ -363,6 +375,14 @@ module Make(Eng : Engine) = struct
       executeTransitionContent(enabledTransitions)
       enterStates(enabledTransitions)
   *)
+
+  let microstep engine doc conf transitions =
+    if TransitionSet.is_empty transitions
+    then engine, conf
+    else
+      let engine, conf = exit_states engine doc conf transitions in
+      let engine = execute_transition_content engine transitions in
+      enter_states engine doc conf transitions
 
   (* TODO *)
 
@@ -433,69 +453,32 @@ module Make(Eng : Engine) = struct
 
   (* TODO *)
 
-  (*
-  function getProperAncestors(state1, state2)
-
-  If state2 is null, returns the set of all ancestors of state1 in ancestry order (state1's parent followed by the parent's parent, etc. up to an including the <scxml> element). If state2 is non-null, returns in ancestry order the set of all ancestors of state1, up to but not including state2. (A "proper ancestor" of a state is its parent, or the parent's parent, or the parent's parent's parent, etc.))If state2 is state1's parent, or equal to state1, or a descendant of state1, this returns the empty set.
-  *)
-
-  (* TODO *)
-
-  (*
-  function isDescendant(state1, state2)
-
-  Returns 'true' if state1 is a descendant of state2 (a child, or a child of a child, or a child of a child of a child, etc.) Otherwise returns 'false'.
-  *)
-
-  (* TODO *)
-
-  (*
-  function getChildStates(state1)
-
-  Returns a list containing all <state>, <final>, and <parallel> children of state1.
-  *)
-
-  (* TODO *)
-
-
-  let compute_entry_set doc history transitions conf =
-    [], conf
-
-  let enter_states doc transitions conf =
-    let history = [] in (* TODO figure out history *)
-    let states, conf = compute_entry_set doc history transitions conf in
-    conf
-
-  let microstep it doc conf transitions =
-    conf
-
-  let macrostep it doc conf event =
-    (* TODO invoke all of the states *)
-    conf
-
   (* Public interface *)
 
-  (* let create query execute send invoke cancel remember recall =
-    {query; execute; send; invoke; cancel; remember; recall;} *)
-
   let start engine doc =
-    engine
+    let transitions = TransitionSet.of_list doc.Document.initial_transitions in
+    let conf = IntSet.empty in
+    let engine, conf = enter_states engine doc conf transitions in
+    let enabled = select_eventless_transitions engine doc conf in
+    microstep engine doc conf enabled
 
-  let handle_internal_event it doc conf event =
-    conf
+  let handle_internal_event engine doc conf event =
+    engine, conf
 
-  let finalize_macrostep it doc conf =
-    conf
+  let finalize_macrostep engine doc conf =
+    IntSet.fold (fun idx acc ->
+      let state = resolve doc idx in
+      List.fold_left Eng.invoke acc state.State.invocations
+    ) conf engine
 
-  let handle_external_event it doc conf event =
-    (* match select_transitions doc conf event with
-    | [] -> it, doc
-    | trans -> microstep it doc conf trans *)
-    conf
+  let handle_external_event engine doc conf event =
+    let enabled = select_transitions engine doc conf event in
+    microstep engine doc conf enabled
 
-  let handle_event it doc conf event =
-    conf
-
-  let stop engine doc =
-    exit_interpreter engine doc
+  let stop engine doc conf =
+    IntSet.fold (fun idx engine ->
+      let state = resolve doc idx in
+      let engine = List.fold_left Eng.execute engine state.State.on_exit in
+      List.fold_left Eng.cancel engine state.State.invocations
+    ) conf engine
 end
