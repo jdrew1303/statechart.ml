@@ -6,21 +6,16 @@ end)
 module type Engine = sig
   type t
   type executable
-  type ref = int
+  type idx = int
   type configuration = IntSet.t
   type event = string
-  type history = int list
+  type history = int array
 
   module rec TYPES:
     sig
-      type document_binding =
-        [
-          | `early
-          | `late
-        ]
       type state_type =
         [
-          | `composite
+          | `compound
           | `basic
           | `parallel
           | `history
@@ -54,14 +49,14 @@ module type Engine = sig
   and Invoke:
     sig
       type t = {
-        type_: executable option;
+        t: executable option;
         src: executable option;
         id: executable option;
-        namelist: executable list;
+        namelist: executable array;
         autoforward: bool;
-        params: TYPES.param list;
+        params: TYPES.param array;
         content: executable option;
-        on_exit: executable list;
+        on_exit: executable array;
       }
     end
   and Param:
@@ -74,36 +69,37 @@ module type Engine = sig
   and State:
     sig
       type t = {
-        idx: ref;
+        idx: idx;
         depth: int;
         order: int;
         id: string option;
-        type_: TYPES.state_type;
-        initial_state: ref option;
-        transitions: TYPES.transition list;
-        invocations: TYPES.invoke list;
-        on_enter: executable list;
-        on_exit: executable list;
+        t: TYPES.state_type;
+        initial_state: idx option;
+        transitions: TYPES.transition array;
+        invocations: TYPES.invoke array;
+        on_enter: executable array;
+        on_exit: executable array;
         children: IntSet.t;
-        parent: ref option;
+        parent: idx option;
         ancestors: IntSet.t;
         descendants: IntSet.t;
-        history: ref list;
+        history: idx array;
         history_type: TYPES.history_type option;
+        donedata: executable option;
       }
     end
   and Transition:
     sig
       type t = {
-        domain: ref;
+        domain: idx;
         depth: int;
         order: int;
-        source: ref option;
-        targets: ref list;
-        events: string list;
+        source: idx option;
+        targets: idx array option;
+        events: string array option;
         condition: executable option;
-        type_: TYPES.transition_type;
-        on_transition: executable list;
+        t: TYPES.transition_type;
+        on_transition: executable array;
       }
     end
   and Var:
@@ -119,12 +115,14 @@ module type Engine = sig
   type state = State.t
   type transition = Transition.t
 
-  val match_event : string list -> string -> bool
+  val match_event : string array -> string -> bool
   val query : t -> executable -> bool
   val execute : t -> executable -> t
   val send : t -> event -> t
+  val send_internal : t -> event -> executable option -> t
   val invoke : t -> TYPES.invoke -> t
   val cancel : t -> TYPES.invoke -> t
   val remember : t -> int -> history -> t
   val recall : t -> int -> history
+  val finalize : t -> t
 end

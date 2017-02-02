@@ -47,11 +47,26 @@ module Make(Eng : Engine) = struct
   end)
 
   let resolve doc idx = Array.get doc.Document.states idx
-  let resolve_list doc list = List.map (resolve doc) list
   let resolve_set doc set =
     IntSet.fold (fun idx acc ->
       EnterStates.add (resolve doc idx) acc
     ) set EnterStates.empty
+
+  (* This is pretty imperative but it'll probably be faster for most cases *)
+  let array_find cond arr =
+    let value = ref None in
+    let loop = ref true in
+    let i = ref 0 in
+    let l = Array.length arr in
+    while !loop && !i < l do
+      let v = Array.get arr !i in
+      if cond v then (
+        loop := false;
+        value := Some v
+      );
+      incr i
+    done;
+    !value
 
   (*
   function removeConflictingTransitions(enabledTransitions)
@@ -93,11 +108,9 @@ module Make(Eng : Engine) = struct
       then (
         let ancs = state.State.children in
         EnterStates.fold (fun state acc ->
-          try
-            let transition = List.find f state.State.transitions in
-            TransitionSet.add transition acc
-          with
-          | _ -> acc
+          match array_find f state.State.transitions with
+          | Some transition -> TransitionSet.add transition acc
+          | None -> acc
         ) (EnterStates.add state (resolve_set doc ancs)) acc
       )
       else acc
@@ -125,8 +138,9 @@ module Make(Eng : Engine) = struct
   let select_eventless_transitions engine doc conf =
     query_transitions (fun engine transition ->
       match transition with
-      | {Transition.events=[]; condition=Some cond} -> Eng.query engine cond
-      | {Transition.events=[]; condition=None} -> true
+      | {Transition.events=None; condition=Some cond} ->
+        Eng.query engine cond
+      | {Transition.events=None; condition=None} -> true
       | _ -> false
     ) engine doc conf
 
@@ -153,9 +167,11 @@ module Make(Eng : Engine) = struct
   let select_transitions engine doc conf event =
     query_transitions (fun engine transition ->
       match transition with
-      | {Transition.events=[]} -> false
-      | {Transition.events=events; condition=Some cond} -> (Eng.match_event events event) && (Eng.query engine cond)
-      | {Transition.events=events; condition=None} -> Eng.match_event events event
+      | {Transition.events=Some events; condition=Some cond} ->
+        (Eng.match_event events event) && (Eng.query engine cond)
+      | {Transition.events=Some events; condition=None} ->
+        Eng.match_event events event
+      | _ -> false
     ) engine doc conf
 
   (*
@@ -177,9 +193,8 @@ module Make(Eng : Engine) = struct
   let compute_exit_set doc conf enabled =
     TransitionSet.fold (fun transition acc ->
       match transition with
-      | {Transition.targets=[]} -> acc
-      | {Transition.targets=targets; domain=domain} ->
-        List.fold_left (fun acc target ->
+      | {Transition.targets=Some targets; domain=domain} ->
+        Array.fold_left (fun acc target ->
           IntSet.fold (fun idx acc ->
             let state = resolve doc idx in
             if IntSet.mem domain state.State.descendants
@@ -187,6 +202,7 @@ module Make(Eng : Engine) = struct
             else acc
           ) conf acc
         ) acc targets
+      | _ -> acc
     ) enabled ExitStates.empty
 
   (*
@@ -234,8 +250,8 @@ module Make(Eng : Engine) = struct
     let engine = remember_history engine conf to_exit in
     ExitStates.fold (fun state acc ->
       let engine, new_conf = acc in
-      let engine = List.fold_left Eng.execute engine state.State.on_exit in
-      let engine = List.fold_left Eng.cancel engine state.State.invocations in
+      let engine = Array.fold_left Eng.execute engine state.State.on_exit in
+      let engine = Array.fold_left Eng.cancel engine state.State.invocations in
       let new_conf = IntSet.remove state.State.idx new_conf in
       engine, new_conf
     ) to_exit (engine, conf)
@@ -252,7 +268,7 @@ module Make(Eng : Engine) = struct
 
   let execute_transition_content engine enabled =
     TransitionSet.fold (fun transition acc ->
-      List.fold_left Eng.execute acc transition.Transition.on_transition
+      Array.fold_left Eng.execute acc transition.Transition.on_transition
     ) enabled engine
 
   (*
@@ -270,6 +286,10 @@ module Make(Eng : Engine) = struct
   *)
 
   (* TODO *)
+  let compute_entry_set engine doc conf transitions =
+    let to_enter = EnterStates.empty in
+    (* TODO *)
+    to_enter
 
   (*
   procedure addDescendantStatesToEnter(state,statesToEnter,statesForDefaultEntry, defaultHistoryContent)
@@ -307,6 +327,8 @@ module Make(Eng : Engine) = struct
   *)
 
   (* TODO *)
+  let add_descendant_states_to_enter state to_enter default_entry default_history =
+    state
 
   (*
   procedure addAncestorStatesToEnter(state, ancestor, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
@@ -323,6 +345,31 @@ module Make(Eng : Engine) = struct
   *)
 
   (* TODO *)
+  let add_ancestor_states_to_enter state ancestor to_enter default_entry default_history =
+    state
+
+  (*
+  procedure isInFinalState(s)
+
+  Return true if s is a compound <state> and one of its children is an active <final> state (i.e. is a member of the current configuration), or if s is a <parallel> state and isInFinalState is true of all its children.
+
+  function isInFinalState(s):
+      if isCompoundState(s):
+          return getChildStates(s).some(lambda s: isFinalState(s) and configuration.isMember(s))
+      elif isParallelState(s):
+          return getChildStates(s).every(isInFinalState)
+      else:
+          return false
+  *)
+
+  let rec is_in_final_state doc conf idx =
+    match resolve doc idx with
+    | {State.t=`compound; children=children} ->
+      IntSet.exists (fun idx ->
+        IntSet.mem idx conf && is_in_final_state doc conf idx
+      ) children
+    | {State.t=`parallel; children=children} -> IntSet.for_all (is_in_final_state doc conf) children
+    | _ -> false
 
   (*
   procedure enterStates(enabledTransitions)
@@ -338,13 +385,16 @@ module Make(Eng : Engine) = struct
       for s in statesToEnter.toList().sort(entryOrder):
           configuration.add(s)
           statesToInvoke.add(s)
+          ANALYZE:
           if binding == "late" and s.isFirstEntry:
               initializeDataModel(datamodel.s,doc.s)
               s.isFirstEntry = false
           for content in s.onentry.sort(documentOrder):
               executeContent(content)
+          ANALYZE:
           if statesForDefaultEntry.isMember(s):
               executeContent(s.initial.transition)
+          ANALYZE:
           if defaultHistoryContent[s.id]:
               executeContent(defaultHistoryContent[s.id])
           if isFinalState(s):
@@ -359,9 +409,37 @@ module Make(Eng : Engine) = struct
                           internalQueue.enqueue(new Event("done.state." + grandparent.id))
   *)
 
-  (* TODO *)
+  let send_done_event engine state =
+    match state with
+    | {State.id=Some id} -> Eng.send_internal engine ("done.state." ^ id) state.State.donedata
+    | _ -> engine
+
   let enter_states engine doc conf transitions =
-    engine, conf
+    let to_enter = compute_entry_set engine doc conf transitions in
+    EnterStates.fold (fun state acc ->
+      let engine, conf = acc in
+      let conf = IntSet.add state.State.idx conf in
+      let engine = Array.fold_left Eng.execute engine state.State.on_enter in
+      let engine = match state with
+      | {State.t=`final; parent=None} -> Eng.finalize engine
+      | {State.t=`final; parent=Some p} -> (
+        let parent = resolve doc p in
+        let engine = send_done_event engine state in
+        match parent with
+        | {State.parent=Some gp} -> (
+          let grandparent = resolve doc gp in
+          match grandparent with
+          | {State.t=`parallel; children=children} ->
+            if IntSet.for_all (is_in_final_state doc conf) children
+            then send_done_event engine grandparent
+            else engine
+          | _ -> engine
+        )
+        | _ -> engine
+      )
+      | _ -> engine in
+      engine, conf
+    ) to_enter (engine, conf)
 
   (*
   procedure microstep(enabledTransitions)
@@ -384,24 +462,6 @@ module Make(Eng : Engine) = struct
       let engine = execute_transition_content engine transitions in
       enter_states engine doc conf transitions
 
-  (* TODO *)
-
-  (*
-  procedure isInFinalState(s)
-
-  Return true if s is a compound <state> and one of its children is an active <final> state (i.e. is a member of the current configuration), or if s is a <parallel> state and isInFinalState is true of all its children.
-
-  function isInFinalState(s):
-      if isCompoundState(s):
-          return getChildStates(s).some(lambda s: isFinalState(s) and configuration.isMember(s))
-      elif isParallelState(s):
-          return getChildStates(s).every(isInFinalState)
-      else:
-          return false
-  *)
-
-  (* TODO *)
-
   (*
   function getTransitionDomain(transition)
 
@@ -418,7 +478,6 @@ module Make(Eng : Engine) = struct
   *)
 
   (* TODO *)
-
 
   (*
   function findLCCA(stateList)
@@ -463,12 +522,15 @@ module Make(Eng : Engine) = struct
     microstep engine doc conf enabled
 
   let handle_internal_event engine doc conf event =
-    engine, conf
+    let enabled = select_transitions engine doc conf event in
+    let engine, conf = microstep engine doc conf enabled in
+    let enabled = select_eventless_transitions engine doc conf in
+    microstep engine doc conf enabled
 
   let finalize_macrostep engine doc conf =
     IntSet.fold (fun idx acc ->
       let state = resolve doc idx in
-      List.fold_left Eng.invoke acc state.State.invocations
+      Array.fold_left Eng.invoke acc state.State.invocations
     ) conf engine
 
   let handle_external_event engine doc conf event =
@@ -478,7 +540,7 @@ module Make(Eng : Engine) = struct
   let stop engine doc conf =
     IntSet.fold (fun idx engine ->
       let state = resolve doc idx in
-      let engine = List.fold_left Eng.execute engine state.State.on_exit in
-      List.fold_left Eng.cancel engine state.State.invocations
+      let engine = Array.fold_left Eng.execute engine state.State.on_exit in
+      Array.fold_left Eng.cancel engine state.State.invocations
     ) conf engine
 end
