@@ -175,29 +175,3 @@ and Var:
   end = Var
 
 include TYPES
-
-type datamodel = param list
-
-let compare_state s1 s2 =
-  match s1.State.depth, s2.State.depth with
-  | d1, d2 when d1 = d2 -> Pervasives.compare s1.State.priority s2.State.priority
-  | d1, d2 when d1 >= d2 -> 1
-  | _ -> -1
-
-let compare_state_reverse t1 t2 =
-  match t2.State.depth, t1.State.depth with
-  | d1, d2 when d1 = d2 -> Pervasives.compare t2.State.priority t1.State.priority
-  | d1, d2 when d1 >= d2 -> -1
-  | _ -> 1
-
-let compare_transition t1 t2 =
-  match t1.Transition.depth, t2.Transition.depth with
-  | d1, d2 when d1 = d2 -> Pervasives.compare t1.Transition.priority t2.Transition.priority
-  | d1, d2 when d1 >= d2 -> 1
-  | _ -> -1
-
-let compare_transition_reverse t1 t2 =
-  match t2.Transition.depth, t1.Transition.depth with
-  | d1, d2 when d1 = d2 -> Pervasives.compare t2.Transition.priority t1.Transition.priority
-  | d1, d2 when d1 >= d2 -> -1
-  | _ -> 1

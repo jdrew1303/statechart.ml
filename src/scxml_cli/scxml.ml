@@ -7,9 +7,8 @@ open Statechart_analyzer_printer
 let handle_result res =
   match res with
   | Some doc ->
-    doc
-    |> assign_state_ids
-    |> dump_document
+    let doc, _ = assign_state_ids doc in
+    dump_document doc
   | None -> print_endline "Invalid document"
 
 let compile src =

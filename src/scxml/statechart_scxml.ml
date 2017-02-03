@@ -72,30 +72,33 @@ let parse_string_list str =
   | Some s -> ws_split s
   | _ -> []
 
-let parse_scxml props children =
+let parse_scxml line props children =
   Document {
     Document.name=get_prop props "name";
     initial=get_prop props "initial" |> parse_string_list;
     data_model=get_prop props "datamodel";
     binding=get_prop props "binding" |> parse_binding;
     children=children;
+    line=line;
   }
 
-let parse_state props children =
+let parse_state line props children =
   State {
     State.idx=None;
     id=get_prop props "id";
     initial=get_prop props "initial" |> parse_string_list;
     children=children;
     ancestors=[];
+    line=line;
   }
 
-let parse_parallel props children =
+let parse_parallel line props children =
   Parallel {
     Parallel.idx=None;
     id=get_prop props "id";
     children=children;
     ancestors=[];
+    line=line;
   }
 
 let parse_transition_type t =
@@ -103,38 +106,43 @@ let parse_transition_type t =
   | Some "internal" -> `internal
   | _ -> `external_
 
-let parse_transition props children =
+let parse_transition line props children =
   Transition {
     Transition.event=get_prop props "event" |> parse_string_list;
     cond=get_prop props "cond";
     target=get_prop props "target" |> parse_string_list;
     t=get_prop props "type" |> parse_transition_type;
     children=children;
+    line=line;
   }
 
-let parse_initial props children =
+let parse_initial line props children =
   Initial {
     Initial.idx=None;
     children=children;
     ancestors=[];
+    line=line;
   }
 
-let parse_final props children =
+let parse_final line props children =
   Final {
     Final.idx=None;
     id=get_prop props "id";
     children=children;
     ancestors=[];
+    line=line;
   }
 
-let parse_on_entry props children =
+let parse_on_entry line props children =
   OnEntry {
     OnEntry.children=children;
+    line=line;
   }
 
-let parse_on_exit props children =
+let parse_on_exit line props children =
   OnExit {
     OnExit.children=children;
+    line=line;
   }
 
 let parse_history_type t =
@@ -142,29 +150,31 @@ let parse_history_type t =
   | Some "internal" -> `shallow
   | _ -> `deep
 
-let parse_history props children =
+let parse_history line props children =
   History {
     History.idx=None;
     id=get_prop props "id";
     t=get_prop props "type" |> parse_history_type;
     children=children;
     ancestors=[];
+    line=line;
   }
 
-let parse_raise props =
+let parse_raise line props =
   Raise {
     Raise.event=get_prop props "event";
+    line=line;
   }
 
-let finish_if_child current prev cond =
+let finish_if_child current prev cond line =
   match current with
   | [] -> ([], prev)
-  | _ -> let c = {CaseClause.cond=cond; children=current} in
+  | _ -> let c = {CaseClause.cond=cond; children=current; line=line} in
          ([], c :: prev)
 
 let parse_if_child current prev child =
   match child with
-  | CaseClause {CaseClause.cond=cond} -> finish_if_child current prev cond
+  | CaseClause {CaseClause.cond=cond; line=line} -> finish_if_child current prev cond line
   | _ -> (child :: current, prev)
 
 let rec parse_if_children current prev children =
@@ -174,90 +184,102 @@ let rec parse_if_children current prev children =
     let current, prev = parse_if_child current prev child in
     parse_if_children current prev rest
 
-let parse_if props children =
+let parse_if line props children =
   let rev_children = List.rev children in
   let current, prev = parse_if_children [] [] rev_children in
   let cond = get_prop props "cond" in
-  let _, children = finish_if_child current prev cond in
+  let _, children = finish_if_child current prev cond line in
   Case {
     Case.children=children;
+    line=line;
   }
 
-let parse_if_else props =
+let parse_if_else line props =
   CaseClause {
     CaseClause.cond=get_prop props "cond";
     children=[];
+    line=line;
   }
 
-let parse_else =
+let parse_else line =
   CaseClause {
     CaseClause.cond=None;
     children=[];
+    line=line;
   }
 
-let parse_foreach props children =
+let parse_foreach line props children =
   Foreach {
     Foreach.array=get_prop props "array";
     item=get_prop props "item";
     index=get_prop props "index";
     children=children;
+    line=line;
   }
 
-let parse_log props children =
+let parse_log line props children =
   Log {
     Log.expr=get_prop props "expr";
     label=get_prop props "label";
+    line=line;
   }
 
-let parse_data_model children =
+let parse_data_model line children =
   DataModel {
     DataModel.children=children;
+    line=line;
   }
 
-let parse_data props children =
+let parse_data line props children =
   Data {
     Data.id=get_prop props "id";
     src=get_prop props "src";
     expr=get_prop props "expr";
     (* TODO *)
     children=Some "";
+    line=line;
   }
 
-let parse_assign props children =
+let parse_assign line props children =
   Assign {
     Assign.location=get_prop props "location";
     expr=get_prop props "expr";
     (* TODO *)
     children=Some "";
+    line=line;
   }
 
-let parse_done_data children =
+let parse_done_data line children =
   DoneData {
     DoneData.children=children;
+    line=line;
   }
 
-let parse_content props children =
+let parse_content line props children =
   Content {
     Content.expr=get_prop props "expr";
     (* TODO *)
     children=Some "";
+    line=line;
   }
 
-let parse_param props =
+let parse_param line props =
   Param {
     Param.name=get_prop props "name";
     expr=get_prop props "expr";
     location=get_prop props "location";
+    line=line;
   }
 
-let parse_script props children =
+let parse_script line props children =
   Script {
     Script.src=get_prop props "src";
     (* TODO *)
     children=Some "";
+    line=line;
   }
 
-let parse_send props children =
+let parse_send line props children =
   Send {
     Send.event=get_prop_expr props "event";
     target=get_prop_expr props "target";
@@ -266,14 +288,16 @@ let parse_send props children =
     delay=get_prop_expr props "delay";
     namelist=get_prop props "namelist" |> parse_string_list;
     children=children;
+    line=line;
   }
 
-let parse_cancel props =
+let parse_cancel line props =
   Cancel {
     Cancel.sendid=get_prop_expr props "sendid";
+    line=line;
   }
 
-let parse_invoke props children =
+let parse_invoke line props children =
   Invoke {
     Invoke.t=get_prop_expr props "type";
     src=get_prop_expr props "src";
@@ -281,45 +305,47 @@ let parse_invoke props children =
     namelist=get_prop props "namelist" |> parse_string_list;
     autoforward=get_prop_bool props "autoforward";
     children=children;
+    line=line;
   }
 
-let parse_finalize children =
+let parse_finalize line children =
   Finalize {
     Finalize.children=children;
+    line=line;
   }
 
-let parse_element name proplist children =
+let parse_element line name proplist children =
   let props = Props.of_list proplist in
   let ns, el = name in
   match ns with
   | "http://www.w3.org/2005/07/scxml" -> (
     match el with
-    | "scxml" -> SCEl (parse_scxml props (filter_children children))
-    | "state" -> SCEl (parse_state props (filter_children children))
-    | "parallel" -> SCEl (parse_parallel props (filter_children children))
-    | "transition" -> SCEl (parse_transition props (filter_children children))
-    | "initial" -> SCEl (parse_initial props (filter_children children))
-    | "final" -> SCEl (parse_final props (filter_children children))
-    | "onentry" -> SCEl (parse_on_entry props (filter_children children))
-    | "onexit" -> SCEl (parse_on_exit props (filter_children children))
-    | "history" -> SCEl (parse_history props (filter_children children))
-    | "raise" -> SCEl (parse_raise props)
-    | "if" -> SCEl (parse_if props (filter_children children))
-    | "ifelse" -> SCEl (parse_if_else props)
-    | "else" -> SCEl parse_else
-    | "foreach" -> SCEl (parse_foreach props (filter_children children))
-    | "log" -> SCEl (parse_log props (filter_children children))
-    | "datamodel" -> SCEl (parse_data_model (filter_children children))
-    | "data" -> SCEl (parse_data props (filter_children children))
-    | "assign" -> SCEl (parse_assign props (filter_children children))
-    | "donedata" -> SCEl (parse_done_data (filter_children children))
-    | "content" -> SCEl (parse_content props children)
-    | "param" -> SCEl (parse_param props)
-    | "script" -> SCEl (parse_script props children)
-    | "send" -> SCEl (parse_send props (filter_children children))
-    | "cancel" -> SCEl (parse_cancel props)
-    | "invoke" -> SCEl (parse_invoke props (filter_children children))
-    | "finalize" -> SCEl (parse_finalize (filter_children children))
+    | "scxml" -> SCEl (parse_scxml line props (filter_children children))
+    | "state" -> SCEl (parse_state line props (filter_children children))
+    | "parallel" -> SCEl (parse_parallel line props (filter_children children))
+    | "transition" -> SCEl (parse_transition line props (filter_children children))
+    | "initial" -> SCEl (parse_initial  line props (filter_children children))
+    | "final" -> SCEl (parse_final line props (filter_children children))
+    | "onentry" -> SCEl (parse_on_entry line props (filter_children children))
+    | "onexit" -> SCEl (parse_on_exit line props (filter_children children))
+    | "history" -> SCEl (parse_history line props (filter_children children))
+    | "raise" -> SCEl (parse_raise line props)
+    | "if" -> SCEl (parse_if line props (filter_children children))
+    | "ifelse" -> SCEl (parse_if_else line props)
+    | "else" -> SCEl (parse_else line)
+    | "foreach" -> SCEl (parse_foreach line props (filter_children children))
+    | "log" -> SCEl (parse_log line props (filter_children children))
+    | "datamodel" -> SCEl (parse_data_model line (filter_children children))
+    | "data" -> SCEl (parse_data line props (filter_children children))
+    | "assign" -> SCEl (parse_assign line props (filter_children children))
+    | "donedata" -> SCEl (parse_done_data line (filter_children children))
+    | "content" -> SCEl (parse_content line props children)
+    | "param" -> SCEl (parse_param line props)
+    | "script" -> SCEl (parse_script line props children)
+    | "send" -> SCEl (parse_send line props (filter_children children))
+    | "cancel" -> SCEl (parse_cancel line props)
+    | "invoke" -> SCEl (parse_invoke line props (filter_children children))
+    | "finalize" -> SCEl (parse_finalize line (filter_children children))
     | _ -> None
   )
   | _ -> None
@@ -333,14 +359,20 @@ let from_signals signals =
   signals
   |> tree
     ~text:(fun ss -> Text (String.concat "" ss))
-    ~element:(parse_element)
+    ~element:(parse_element None)
   |> unwrap
 
 let from_stream stream =
-  stream
-  |> parse_xml
+  let parser = parse_xml stream in
+  parser
   |> Markup.signals
-  |> from_signals
+  |> tree
+    ~text:(fun ss -> Text (String.concat "" ss))
+    ~element:(fun n p c ->
+      let line, _col = Markup.location parser in
+      parse_element (Some line) n p c
+    )
+  |> unwrap
 
 let from_string str = from_stream (string str)
 

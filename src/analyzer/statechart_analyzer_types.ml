@@ -87,6 +87,7 @@ and Document:
       data_model: string option;
       binding: TYPES.document_binding;
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = Document
 and State:
@@ -97,6 +98,7 @@ and State:
       initial: string list;
       children: TYPES.statechart_el list;
       ancestors: int list;
+      line: int option;
     }
   end = State
 and Parallel:
@@ -106,6 +108,7 @@ and Parallel:
       id: string option;
       children: TYPES.statechart_el list;
       ancestors: int list;
+      line: int option;
     }
   end = Parallel
 and Transition:
@@ -116,6 +119,7 @@ and Transition:
       target: string list;
       t: TYPES.transition_type;
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = Transition
 and Initial:
@@ -124,6 +128,7 @@ and Initial:
       idx: int option;
       children: TYPES.statechart_el list;
       ancestors: int list;
+      line: int option;
     }
   end = Initial
 and Final:
@@ -133,18 +138,21 @@ and Final:
       id: string option;
       children: TYPES.statechart_el list;
       ancestors: int list;
+      line: int option;
     }
   end = Final
 and OnEntry:
   sig
     type t = {
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = OnEntry
 and OnExit:
   sig
     type t = {
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = OnExit
 and History:
@@ -155,18 +163,21 @@ and History:
       children: TYPES.statechart_el list;
       t: TYPES.history_type;
       ancestors: int list;
+      line: int option;
     }
   end = History
 and Raise:
   sig
     type t = {
       event: string option;
+      line: int option;
     }
   end = Raise
 and Case:
   sig
     type t = {
-      children: TYPES.case_clause list
+      children: TYPES.case_clause list;
+      line: int option;
     }
   end = Case
 and CaseClause:
@@ -174,6 +185,7 @@ and CaseClause:
     type t = {
       cond: string option;
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = CaseClause
 and Foreach:
@@ -183,6 +195,7 @@ and Foreach:
       item: string option;
       index: string option;
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = Foreach
 and Log:
@@ -190,12 +203,14 @@ and Log:
     type t = {
       label: string option;
       expr: string option;
+      line: int option;
     }
   end = Log
 and DataModel:
   sig
     type t = {
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = DataModel
 and Data:
@@ -205,6 +220,7 @@ and Data:
       src: string option;
       expr: string option;
       children: string option; (* TODO make this a more complex type *)
+      line: int option;
     }
   end = Data
 and Assign:
@@ -213,12 +229,14 @@ and Assign:
       location: string option;
       expr: string option;
       children: string option; (* TODO make this a more complex type *)
+      line: int option;
     }
   end = Assign
 and DoneData:
   sig
     type t = {
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = DoneData
 and Content:
@@ -226,6 +244,7 @@ and Content:
     type t = {
       expr: string option;
       children: string option; (* TODO make this a more complex type *)
+      line: int option;
     }
   end = Content
 and Param:
@@ -234,6 +253,7 @@ and Param:
       name: string option;
       expr: string option;
       location: string option;
+      line: int option;
     }
   end = Param
 and Script:
@@ -241,6 +261,7 @@ and Script:
     type t = {
       src: string option;
       children: string option;
+      line: int option;
     }
   end = Script
 and Send:
@@ -253,12 +274,14 @@ and Send:
       delay: TYPES.expr;
       namelist: string list;
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = Send
 and Cancel:
   sig
     type t = {
       sendid: TYPES.expr;
+      line: int option;
     }
   end = Cancel
 and Invoke:
@@ -270,12 +293,14 @@ and Invoke:
       namelist: string list;
       autoforward: bool option;
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = Invoke
 and Finalize:
   sig
     type t = {
       children: TYPES.statechart_el list;
+      line: int option;
     }
   end = Finalize
 

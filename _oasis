@@ -56,7 +56,7 @@ Library statechart_scxml
 
 Executable statechart-scxml
   Path:         src/scxml_cli
-  MainIs:       Main.ml
+  MainIs:       scxml.ml
   BuildDepends: statechart.scxml,
                 cmdliner (>= 0.9)
   CompiledObject: best

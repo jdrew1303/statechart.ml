@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 279e2bf8c508ce42c64b531c70c491cd)
+# DO NOT EDIT (digest: 928f4d7436052223141696ac99093de0)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -33,13 +33,13 @@ true: annot, bin_annot
 <src/scxml/*.ml{,i,y}>: use_statechart_analyzer
 <src/scxml/*.ml{,i,y}>: use_statechart_format
 # Executable statechart-scxml
-<src/scxml_cli/Main.{native,byte}>: package(cmdliner)
-<src/scxml_cli/Main.{native,byte}>: package(humane_re)
-<src/scxml_cli/Main.{native,byte}>: package(markup)
-<src/scxml_cli/Main.{native,byte}>: use_statechart
-<src/scxml_cli/Main.{native,byte}>: use_statechart_analyzer
-<src/scxml_cli/Main.{native,byte}>: use_statechart_format
-<src/scxml_cli/Main.{native,byte}>: use_statechart_scxml
+<src/scxml_cli/scxml.{native,byte}>: package(cmdliner)
+<src/scxml_cli/scxml.{native,byte}>: package(humane_re)
+<src/scxml_cli/scxml.{native,byte}>: package(markup)
+<src/scxml_cli/scxml.{native,byte}>: use_statechart
+<src/scxml_cli/scxml.{native,byte}>: use_statechart_analyzer
+<src/scxml_cli/scxml.{native,byte}>: use_statechart_format
+<src/scxml_cli/scxml.{native,byte}>: use_statechart_scxml
 <src/scxml_cli/*.ml{,i,y}>: package(cmdliner)
 <src/scxml_cli/*.ml{,i,y}>: package(humane_re)
 <src/scxml_cli/*.ml{,i,y}>: package(markup)
