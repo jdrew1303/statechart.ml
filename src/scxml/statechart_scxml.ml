@@ -83,15 +83,19 @@ let parse_scxml props children =
 
 let parse_state props children =
   State {
-    State.id=get_prop props "id";
+    State.idx=None;
+    id=get_prop props "id";
     initial=get_prop props "initial" |> parse_string_list;
     children=children;
+    ancestors=[];
   }
 
 let parse_parallel props children =
   Parallel {
-    Parallel.id=get_prop props "id";
+    Parallel.idx=None;
+    id=get_prop props "id";
     children=children;
+    ancestors=[];
   }
 
 let parse_transition_type t =
@@ -110,13 +114,17 @@ let parse_transition props children =
 
 let parse_initial props children =
   Initial {
-    Initial.children=children;
+    Initial.idx=None;
+    children=children;
+    ancestors=[];
   }
 
 let parse_final props children =
   Final {
-    Final.id=get_prop props "id";
+    Final.idx=None;
+    id=get_prop props "id";
     children=children;
+    ancestors=[];
   }
 
 let parse_on_entry props children =
@@ -136,9 +144,11 @@ let parse_history_type t =
 
 let parse_history props children =
   History {
-    History.id=get_prop props "id";
+    History.idx=None;
+    id=get_prop props "id";
     t=get_prop props "type" |> parse_history_type;
     children=children;
+    ancestors=[];
   }
 
 let parse_raise props =

@@ -75,6 +75,7 @@ module rec TYPES:
       | Cancel of cancel
       | Invoke of invoke
       | Finalize of finalize
+      (* TODO make this have the tag name, props, and children *)
       | Other
 
   end = TYPES
@@ -91,16 +92,20 @@ and Document:
 and State:
   sig
     type t = {
+      idx: int option;
       id: string option;
       initial: string list;
       children: TYPES.statechart_el list;
+      ancestors: int list;
     }
   end = State
 and Parallel:
   sig
     type t = {
+      idx: int option;
       id: string option;
       children: TYPES.statechart_el list;
+      ancestors: int list;
     }
   end = Parallel
 and Transition:
@@ -116,14 +121,18 @@ and Transition:
 and Initial:
   sig
     type t = {
+      idx: int option;
       children: TYPES.statechart_el list;
+      ancestors: int list;
     }
   end = Initial
 and Final:
   sig
     type t = {
+      idx: int option;
       id: string option;
       children: TYPES.statechart_el list;
+      ancestors: int list;
     }
   end = Final
 and OnEntry:
@@ -141,9 +150,11 @@ and OnExit:
 and History:
   sig
     type t = {
+      idx: int option;
       id: string option;
       children: TYPES.statechart_el list;
       t: TYPES.history_type;
+      ancestors: int list;
     }
   end = History
 and Raise:

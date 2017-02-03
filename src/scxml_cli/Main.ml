@@ -1,11 +1,15 @@
 open Cmdliner
 open Statechart_scxml
+open Statechart_analyzer
 open Statechart_analyzer_types
 open Statechart_analyzer_printer
 
 let handle_result res =
   match res with
-  | Some doc -> dump_document doc
+  | Some doc ->
+    doc
+    |> assign_state_ids
+    |> dump_document
   | None -> print_endline "Invalid document"
 
 let compile src =

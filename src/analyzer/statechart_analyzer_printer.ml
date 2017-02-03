@@ -207,7 +207,7 @@ and print_finalize indent el =
   print_type "finalize" indent;
   print_type_close indent
 
-and print_el indent el =
+and print_child indent el =
   let indent = "  " ^ indent in
   match el with
   | Document e -> print_document indent e
@@ -245,7 +245,7 @@ and print_children indent children =
   | [] -> print_type_close indent
   | _ ->
     print_newline ();
-    List.iter (print_el indent) children;
+    List.iter (print_child indent) children;
     print_type_close indent
 
 let dump_document doc =

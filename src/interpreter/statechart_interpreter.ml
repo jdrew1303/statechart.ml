@@ -122,8 +122,8 @@ module Make(Eng : Engine) = struct
         domain: int;
         depth: int;
         order: int;
-        source: int option;
-        targets: int array option;
+        source: int;
+        targets: int array;
         events: event_pattern option;
         condition: query option;
         t: TYPES.transition_type;
@@ -170,9 +170,9 @@ module Make(Eng : Engine) = struct
     type t = State.t
 
     let compare s1 s2 =
-      match s2.State.depth, s1.State.depth with
-      | d1, d2 when d1 = d2 -> Pervasives.compare s2.State.order s1.State.order
-      | d1, d2 when d1 >= d2 -> -1
+      match s1.State.depth, s2.State.depth with
+      | d1, d2 when d1 = d2 -> Pervasives.compare s1.State.order s2.State.order
+      | d1, d2 when d2 >= d1 -> -1
       | _ -> 1
   end)
 
@@ -335,7 +335,8 @@ module Make(Eng : Engine) = struct
   let compute_exit_set doc conf enabled =
     TransitionSet.fold (fun transition acc ->
       match transition with
-      | {Transition.targets=Some targets; domain=domain} ->
+      | {Transition.targets=[||]} -> acc
+      | {Transition.targets=targets; domain=domain} ->
         Array.fold_left (fun acc target ->
           IntSet.fold (fun idx acc ->
             let state = resolve doc idx in
@@ -344,7 +345,6 @@ module Make(Eng : Engine) = struct
             else acc
           ) conf acc
         ) acc targets
-      | _ -> acc
     ) enabled ExitStates.empty
 
   (*
@@ -416,6 +416,17 @@ module Make(Eng : Engine) = struct
     {engine with executions=executions}
 
   (*
+  function getProperAncestors(state1, state2)
+
+  If state2 is null, returns the set of all ancestors of state1 in ancestry order (state1's parent followed by the parent's parent, etc. up to an including the <scxml> element). If state2 is non-null, returns in ancestry order the set of all ancestors of state1, up to but not including state2. (A "proper ancestor" of a state is its parent, or the parent's parent, or the parent's parent's parent, etc.))If state2 is state1's parent, or equal to state1, or a descendant of state1, this returns the empty set.
+  *)
+
+  let get_proper_ancestors s1 s2 =
+    let s1_a = s1.State.ancestors in
+    let s2_a = s2.State.ancestors in
+    IntSet.diff (IntSet.add s2.State.idx s2_a) s1_a
+
+  (*
   procedure addDescendantStatesToEnter(state,statesToEnter,statesForDefaultEntry, defaultHistoryContent)
 
   The purpose of this procedure is to add to statesToEnter 'state' and any of its descendants that the state machine will end up entering when it enters 'state'. (N.B. If 'state' is a history pseudo-state, we dereference it and add the history value instead.) Note that this procedure permanently modifies both statesToEnter and statesForDefaultEntry.
@@ -451,8 +462,8 @@ module Make(Eng : Engine) = struct
   *)
 
   (* TODO *)
-  let rec add_descendant_states_to_enter state to_enter default_entry default_history =
-    state
+  let rec add_descendant_states_to_enter engine doc to_enter state =
+    to_enter
 
   (*
   procedure addAncestorStatesToEnter(state, ancestor, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
@@ -468,9 +479,63 @@ module Make(Eng : Engine) = struct
                       addDescendantStatesToEnter(child,statesToEnter,statesForDefaultEntry, defaultHistoryContent)
   *)
 
-  (* TODO *)
-  and add_ancestor_states_to_enter state ancestor to_enter default_entry default_history =
-    state
+  and add_ancestor_states_to_enter engine doc to_enter state ancestor =
+    IntSet.fold (fun idx acc ->
+      let anc = resolve doc idx in
+      let acc = EnterStates.add anc acc in
+      match anc with
+      | {State.t=`parallel; children=children} ->
+        IntSet.fold (fun child_idx acc ->
+          (* TODO *)
+          acc
+        ) children acc
+      | _ -> acc
+    ) (get_proper_ancestors state ancestor) to_enter
+
+  (*
+  function getEffectiveTargetStates(transition)
+
+  Returns the states that will be the target when 'transition' is taken, dereferencing any history states.
+
+  function getEffectiveTargetStates(transition)
+      targets = new OrderedSet()
+      for s in transition.target
+          if isHistoryState(s):
+              if historyValue[s.id]:
+                  targets.union(historyValue[s.id])
+              else:
+                  targets.union(getEffectiveTargetStates(s.transition))
+          else:
+              targets.add(s)
+      return targets
+  *)
+
+  let get_history history key =
+    try Some (HistoryMap.find key history)
+    with
+    | _ -> None
+
+  let rec get_effective_target_states engine doc transition =
+    let acc = EnterStates.empty in
+    let history = engine.history in
+    Array.fold_left (fun acc idx ->
+      let state = resolve doc idx in
+      match state with
+      | {State.t=`history; transitions=transitions} -> (
+        match get_history history idx with
+        | None -> (
+          Array.fold_left (fun acc transition ->
+            let targets = get_effective_target_states engine doc transition in
+            EnterStates.union acc targets
+          ) acc transitions
+        )
+        | Some hist -> (
+          let states = resolve_set doc hist in
+          EnterStates.union acc states
+        )
+      )
+      | _ -> EnterStates.add state acc
+    ) acc transition.Transition.targets
 
   (*
   procedure computeEntrySet(transitions, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
@@ -486,11 +551,18 @@ module Make(Eng : Engine) = struct
               addAncestorStatesToEnter(s, ancestor, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
   *)
 
-  (* TODO *)
   let compute_entry_set engine doc conf transitions =
-    let to_enter = EnterStates.empty in
-    (* TODO *)
-    to_enter
+    TransitionSet.fold (fun transition acc ->
+      Array.fold_left (fun acc idx ->
+        let state = resolve doc idx in
+        let acc = add_descendant_states_to_enter engine doc acc state in
+        let ancestor = resolve doc transition.Transition.domain in
+        let effective_target_states = get_effective_target_states engine doc transition in
+        EnterStates.fold (fun state acc ->
+          add_ancestor_states_to_enter engine doc acc state ancestor
+        ) effective_target_states acc
+      ) acc transition.Transition.targets
+    ) transitions EnterStates.empty
 
   (*
   procedure isInFinalState(s)
@@ -635,26 +707,6 @@ module Make(Eng : Engine) = struct
       for anc in getProperAncestors(stateList.head(),null).filter(isCompoundStateOrScxmlElement):
           if stateList.tail().every(lambda s: isDescendant(s,anc)):
               return anc
-  *)
-
-  (* TODO *)
-
-  (*
-  function getEffectiveTargetStates(transition)
-
-  Returns the states that will be the target when 'transition' is taken, dereferencing any history states.
-
-  function getEffectiveTargetStates(transition)
-      targets = new OrderedSet()
-      for s in transition.target
-          if isHistoryState(s):
-              if historyValue[s.id]:
-                  targets.union(historyValue[s.id])
-              else:
-                  targets.union(getEffectiveTargetStates(s.transition))
-          else:
-              targets.add(s)
-      return targets
   *)
 
   (* TODO *)
