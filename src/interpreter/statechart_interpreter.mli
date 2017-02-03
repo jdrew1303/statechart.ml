@@ -1,20 +1,31 @@
 open Statechart_interpreter_engine
 
 module type Interpreter = sig
-  type t
-  type configuration
+  type engine
+  type datamodel
   type document
   type executable
   type event
-  val start : t -> document -> t * configuration
-  val handle_internal_event : t -> document -> configuration -> event -> t * configuration
-  val handle_external_event : t -> document -> configuration -> event -> t * configuration
-  val finalize_macrostep : t -> document -> configuration -> t
-  val stop : t -> document -> configuration -> t
+  val start : datamodel -> document -> engine
+  val handle_internal_event : engine -> document -> event -> engine
+  val synchronize : engine -> document -> engine
+  val handle_external_event : engine -> document -> event -> engine
+  val finalize_macrostep : engine -> document -> engine
+  val stop : engine -> document -> engine
+
+  type configuration
+  type internal
+  type executions
+  type invocations
+  type cancellations
+  val get_configuration : engine -> configuration
+  val put_configuration : engine -> configuration -> engine
+  val get_datamodel : engine -> datamodel
+  val put_datamodel : engine -> datamodel -> engine
+  val get_queues : engine -> (internal * executions * invocations * cancellations)
+  val is_running : engine -> bool
 end
 
 module Make (Eng : Engine) :
-  Interpreter with type t = Eng.t
-              with type document = Eng.document
+  Interpreter with type datamodel = Eng.datamodel
               with type executable = Eng.executable
-              with type event = Eng.event

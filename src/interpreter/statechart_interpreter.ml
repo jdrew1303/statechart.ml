@@ -1,20 +1,162 @@
 open Statechart_interpreter_engine
 
+module IntSet = Set.Make(struct
+  type t = int
+  let compare = compare
+end)
+
 module type Interpreter = sig
-  type t
-  type configuration
+  type engine
+  type datamodel
   type document
   type executable
   type event
-  val start : t -> document -> t * configuration
-  val handle_internal_event : t -> document -> configuration -> event -> t * configuration
-  val handle_external_event : t -> document -> configuration -> event -> t * configuration
-  val finalize_macrostep : t -> document -> configuration -> t
-  val stop : t -> document -> configuration -> t
+  val start : datamodel -> document -> engine
+  val handle_internal_event : engine -> document -> event -> engine
+  val synchronize : engine -> document -> engine
+  val handle_external_event : engine -> document -> event -> engine
+  val finalize_macrostep : engine -> document -> engine
+  val stop : engine -> document -> engine
+
+  type configuration
+  type internal
+  type executions
+  type invocations
+  type cancellations
+  val get_configuration : engine -> configuration
+  val put_configuration : engine -> configuration -> engine
+  val get_datamodel : engine -> datamodel
+  val put_datamodel : engine -> datamodel -> engine
+  val get_queues : engine -> (internal * executions * invocations * cancellations)
+  val is_running : engine -> bool
 end
 
 module Make(Eng : Engine) = struct
-  include Eng
+  type datamodel = Eng.datamodel
+  type configuration = IntSet.t
+  type executable = Eng.executable
+  type event_pattern = Eng.event_pattern
+  type event = string
+  type query = datamodel -> bool
+
+  module rec TYPES:
+    sig
+      type state_type =
+        [
+          | `compound
+          | `basic
+          | `parallel
+          | `history
+          | `initial
+          | `final
+        ]
+      type history_type =
+        [
+          | `shallow
+          | `deep
+        ]
+      type transition_type =
+        [
+          | `external_
+          | `internal
+        ]
+      type document = Document.t
+      type invoke = Invoke.t
+      type param = Param.t
+      type state = State.t
+      type transition = Transition.t
+    end = TYPES
+  and Document:
+    sig
+      type t = {
+        name: string option;
+        initial_transitions: TYPES.transition list;
+        states: TYPES.state array;
+      }
+    end = Document
+  and Invoke:
+    sig
+      type t = {
+        t: executable option;
+        src: executable option;
+        id: executable option;
+        namelist: executable array;
+        autoforward: bool;
+        params: TYPES.param array;
+        content: executable option;
+        on_exit: executable array;
+      }
+    end = Invoke
+  and Param:
+    sig
+      type t = {
+        id: string;
+        expression: executable option;
+      }
+    end = Param
+  and State:
+    sig
+      type t = {
+        idx: int;
+        depth: int;
+        order: int;
+        id: string option;
+        t: TYPES.state_type;
+        initial_state: int option;
+        transitions: TYPES.transition array;
+        invocations: TYPES.invoke array;
+        on_enter: executable array;
+        on_exit: executable array;
+        children: IntSet.t;
+        parent: int option;
+        ancestors: IntSet.t;
+        descendants: IntSet.t;
+        history: int array;
+        history_type: TYPES.history_type option;
+        donedata: executable option;
+      }
+    end = State
+  and Transition:
+    sig
+      type t = {
+        domain: int;
+        depth: int;
+        order: int;
+        source: int option;
+        targets: int array option;
+        events: event_pattern option;
+        condition: query option;
+        t: TYPES.transition_type;
+        on_transition: executable array;
+      }
+    end = Transition
+
+  type document = TYPES.document
+  type invoke = TYPES.invoke
+  type param = TYPES.param
+  type state = TYPES.state
+  type transition = TYPES.transition
+
+  module HistoryMap = Map.Make(struct
+    type t = int
+    let compare = compare
+  end)
+
+  type internal = (event * executable option) array
+  type executions = executable array
+  type invocations = invoke array
+  type cancellations = invoke array
+
+  type engine = {
+    configuration: IntSet.t;
+    datamodel: datamodel;
+    history: IntSet.t HistoryMap.t;
+    internal: internal;
+    executions: executions;
+    invocations: invocations;
+    cancellations: cancellations;
+    is_running: bool;
+  }
 
   module EnterStates = Set.Make(struct
     type t = State.t
@@ -100,15 +242,14 @@ module Make(Eng : Engine) = struct
   let remove_conflicting_transitions doc t =
     t
 
-  let query_transitions filter engine doc conf =
-    let f = filter engine in
+  let query_transitions filter doc conf =
     let t = IntSet.fold (fun idx acc ->
       let state = resolve doc idx in
       if IntSet.is_empty state.State.children
       then (
         let ancs = state.State.children in
         EnterStates.fold (fun state acc ->
-          match array_find f state.State.transitions with
+          match array_find filter state.State.transitions with
           | Some transition -> TransitionSet.add transition acc
           | None -> acc
         ) (EnterStates.add state (resolve_set doc ancs)) acc
@@ -136,13 +277,14 @@ module Make(Eng : Engine) = struct
   *)
 
   let select_eventless_transitions engine doc conf =
-    query_transitions (fun engine transition ->
+    let datamodel = engine.datamodel in
+    query_transitions (fun transition ->
       match transition with
       | {Transition.events=None; condition=Some cond} ->
-        Eng.query engine cond
+        cond datamodel
       | {Transition.events=None; condition=None} -> true
       | _ -> false
-    ) engine doc conf
+    ) doc conf
 
   (*
   function selectTransitions(event)
@@ -165,14 +307,15 @@ module Make(Eng : Engine) = struct
   *)
 
   let select_transitions engine doc conf event =
-    query_transitions (fun engine transition ->
+    let datamodel = engine.datamodel in
+    query_transitions (fun transition ->
       match transition with
       | {Transition.events=Some events; condition=Some cond} ->
-        (Eng.match_event events event) && (Eng.query engine cond)
+        (Eng.match_event events event) && (cond datamodel)
       | {Transition.events=Some events; condition=None} ->
         Eng.match_event events event
       | _ -> false
-    ) engine doc conf
+    ) doc conf
 
   (*
   procedure computeExitSet(enabledTransitions)
@@ -248,13 +391,14 @@ module Make(Eng : Engine) = struct
   let exit_states engine doc conf enabled =
     let to_exit = compute_exit_set doc conf enabled in
     let engine = remember_history engine conf to_exit in
-    ExitStates.fold (fun state acc ->
-      let engine, new_conf = acc in
-      let engine = Array.fold_left Eng.execute engine state.State.on_exit in
-      let engine = Array.fold_left Eng.cancel engine state.State.invocations in
-      let new_conf = IntSet.remove state.State.idx new_conf in
-      engine, new_conf
-    ) to_exit (engine, conf)
+    let exec, inv, conf = ExitStates.fold (fun state acc ->
+      let exec, inv, conf = acc in
+      let exec = Array.append exec state.State.on_exit in
+      let inv = Array.append inv state.State.invocations in
+      let conf = IntSet.remove state.State.idx conf in
+      exec, inv, conf
+    ) to_exit (engine.executions, engine.invocations, conf) in
+    {engine with executions=exec; invocations=inv}, conf
 
   (*
   procedure executeTransitionContent(enabledTransitions)
@@ -267,29 +411,10 @@ module Make(Eng : Engine) = struct
   *)
 
   let execute_transition_content engine enabled =
-    TransitionSet.fold (fun transition acc ->
-      Array.fold_left Eng.execute acc transition.Transition.on_transition
-    ) enabled engine
-
-  (*
-  procedure computeEntrySet(transitions, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
-
-  Compute the complete set of states that will be entered as a result of taking 'transitions'. This value will be returned in 'statesToEnter' (which is modified by this procedure). Also place in 'statesForDefaultEntry' the set of all states whose default initial states were entered. First gather up all the target states in 'transitions'. Then add them and, for all that are not atomic states, add all of their (default) descendants until we reach one or more atomic states. Then add any ancestors that will be entered within the domain of the transition. (Ancestors outside of the domain of the transition will not have been exited.)
-
-  procedure computeEntrySet(transitions, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
-      for t in transitions:
-          for s in t.target:
-              addDescendantStatesToEnter(s,statesToEnter,statesForDefaultEntry, defaultHistoryContent)
-          ancestor = getTransitionDomain(t)
-          for s in getEffectiveTargetStates(t)):
-              addAncestorStatesToEnter(s, ancestor, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
-  *)
-
-  (* TODO *)
-  let compute_entry_set engine doc conf transitions =
-    let to_enter = EnterStates.empty in
-    (* TODO *)
-    to_enter
+    let executions = TransitionSet.fold (fun transition exec ->
+      Array.append exec transition.Transition.on_transition
+    ) enabled engine.executions in
+    {engine with executions=executions}
 
   (*
   procedure addDescendantStatesToEnter(state,statesToEnter,statesForDefaultEntry, defaultHistoryContent)
@@ -327,7 +452,7 @@ module Make(Eng : Engine) = struct
   *)
 
   (* TODO *)
-  let add_descendant_states_to_enter state to_enter default_entry default_history =
+  let rec add_descendant_states_to_enter state to_enter default_entry default_history =
     state
 
   (*
@@ -345,8 +470,28 @@ module Make(Eng : Engine) = struct
   *)
 
   (* TODO *)
-  let add_ancestor_states_to_enter state ancestor to_enter default_entry default_history =
+  and add_ancestor_states_to_enter state ancestor to_enter default_entry default_history =
     state
+
+  (*
+  procedure computeEntrySet(transitions, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
+
+  Compute the complete set of states that will be entered as a result of taking 'transitions'. This value will be returned in 'statesToEnter' (which is modified by this procedure). Also place in 'statesForDefaultEntry' the set of all states whose default initial states were entered. First gather up all the target states in 'transitions'. Then add them and, for all that are not atomic states, add all of their (default) descendants until we reach one or more atomic states. Then add any ancestors that will be entered within the domain of the transition. (Ancestors outside of the domain of the transition will not have been exited.)
+
+  procedure computeEntrySet(transitions, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
+      for t in transitions:
+          for s in t.target:
+              addDescendantStatesToEnter(s,statesToEnter,statesForDefaultEntry, defaultHistoryContent)
+          ancestor = getTransitionDomain(t)
+          for s in getEffectiveTargetStates(t)):
+              addAncestorStatesToEnter(s, ancestor, statesToEnter, statesForDefaultEntry, defaultHistoryContent)
+  *)
+
+  (* TODO *)
+  let compute_entry_set engine doc conf transitions =
+    let to_enter = EnterStates.empty in
+    (* TODO *)
+    to_enter
 
   (*
   procedure isInFinalState(s)
@@ -411,7 +556,10 @@ module Make(Eng : Engine) = struct
 
   let send_done_event engine state =
     match state with
-    | {State.id=Some id} -> Eng.send_internal engine ("done.state." ^ id) state.State.donedata
+    | {State.id=Some id} ->
+      let event = (("done.state." ^ id), state.State.donedata) in
+      let internal = Array.append engine.internal [| event |] in
+      {engine with internal=internal}
     | _ -> engine
 
   let enter_states engine doc conf transitions =
@@ -419,9 +567,9 @@ module Make(Eng : Engine) = struct
     EnterStates.fold (fun state acc ->
       let engine, conf = acc in
       let conf = IntSet.add state.State.idx conf in
-      let engine = Array.fold_left Eng.execute engine state.State.on_enter in
+      let exec = Array.append engine.executions state.State.on_enter in
       let engine = match state with
-      | {State.t=`final; parent=None} -> Eng.finalize engine
+      | {State.t=`final; parent=None} -> {engine with is_running=false}
       | {State.t=`final; parent=Some p} -> (
         let parent = resolve doc p in
         let engine = send_done_event engine state in
@@ -438,7 +586,7 @@ module Make(Eng : Engine) = struct
         | _ -> engine
       )
       | _ -> engine in
-      engine, conf
+      {engine with executions=exec}, conf
     ) to_enter (engine, conf)
 
   (*
@@ -514,33 +662,67 @@ module Make(Eng : Engine) = struct
 
   (* Public interface *)
 
-  let start engine doc =
+  let start datamodel doc =
+    let engine = {
+      configuration=IntSet.empty;
+      datamodel=datamodel;
+      history=HistoryMap.empty;
+      internal=[||];
+      executions=[||];
+      invocations=[||];
+      cancellations=[||];
+      is_running=true;
+    } in
     let transitions = TransitionSet.of_list doc.Document.initial_transitions in
-    let conf = IntSet.empty in
-    let engine, conf = enter_states engine doc conf transitions in
-    let enabled = select_eventless_transitions engine doc conf in
-    microstep engine doc conf enabled
+    let engine, conf = enter_states engine doc engine.configuration transitions in
+    {engine with configuration=conf}
 
-  let handle_internal_event engine doc conf event =
+  let handle_internal_event engine doc event =
+    let conf = engine.configuration in
     let enabled = select_transitions engine doc conf event in
     let engine, conf = microstep engine doc conf enabled in
+    {engine with configuration=conf}
+
+  let synchronize engine doc =
+    let engine = {engine with
+      internal=[||];
+      executions=[||];
+      invocations=[||];
+      cancellations=[||];
+    } in
+    let conf = engine.configuration in
     let enabled = select_eventless_transitions engine doc conf in
-    microstep engine doc conf enabled
+    let engine, conf = microstep engine doc conf enabled in
+    {engine with configuration=conf}
 
-  let finalize_macrostep engine doc conf =
-    IntSet.fold (fun idx acc ->
+  let finalize_macrostep engine doc =
+    let invocations = IntSet.fold (fun idx inv ->
       let state = resolve doc idx in
-      Array.fold_left Eng.invoke acc state.State.invocations
-    ) conf engine
+      Array.append inv state.State.invocations
+    ) engine.configuration engine.invocations in
+    {engine with invocations=invocations}
 
-  let handle_external_event engine doc conf event =
+  let handle_external_event engine doc event =
+    let conf = engine.configuration in
     let enabled = select_transitions engine doc conf event in
-    microstep engine doc conf enabled
+    let engine, conf = microstep engine doc conf enabled in
+    {engine with configuration=conf}
 
-  let stop engine doc conf =
-    IntSet.fold (fun idx engine ->
+  let stop engine doc =
+    let exec, cancel = IntSet.fold (fun idx acc ->
+      let exec, cancel = acc in
       let state = resolve doc idx in
-      let engine = Array.fold_left Eng.execute engine state.State.on_exit in
-      Array.fold_left Eng.cancel engine state.State.invocations
-    ) conf engine
+      let exec = Array.append exec state.State.on_exit in
+      let cancel = Array.append cancel state.State.invocations in
+      exec, cancel
+    ) engine.configuration (engine.executions, engine.cancellations) in
+    {engine with executions=exec; cancellations=cancel}
+
+  let get_configuration engine = engine.configuration
+  let put_configuration engine configuration = {engine with configuration=configuration}
+  let get_datamodel engine = engine.datamodel
+  let put_datamodel engine datamodel = {engine with datamodel=datamodel}
+  let get_queues engine =
+    engine.internal, engine.executions, engine.invocations, engine.cancellations
+  let is_running engine = engine.is_running
 end
