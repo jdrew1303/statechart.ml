@@ -1,10 +1,8 @@
 open Statechart_interpreter
 
-(* This is just a foreign empty js object *)
-type datamodel_
-
 module Engine = Make(struct
-  type datamodel = datamodel_
+  (* This is just a foreign empty js object *)
+  type datamodel
   type executable = datamodel -> datamodel
   type event_pattern = string
 

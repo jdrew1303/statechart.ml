@@ -22,12 +22,12 @@ module type Interpreter = sig
   type internal
   type executions
   type invocations
-  type cancellations
   val get_configuration : engine -> configuration
-  val put_configuration : engine -> configuration -> engine
+  val get_configuration_names : engine -> document -> string array
   val get_datamodel : engine -> datamodel
   val put_datamodel : engine -> datamodel -> engine
-  val get_queues : engine -> (internal * executions * invocations * cancellations)
+  val get_invocations : engine -> invocations
+  val get_queues : engine -> (internal * executions)
   val is_running : engine -> bool
 end
 
@@ -145,7 +145,6 @@ module Make(Eng : Engine) = struct
   type internal = (event * executable option) array
   type executions = executable array
   type invocations = invoke array
-  type cancellations = invoke array
 
   type engine = {
     configuration: IntSet.t;
@@ -154,7 +153,6 @@ module Make(Eng : Engine) = struct
     internal: internal;
     executions: executions;
     invocations: invocations;
-    cancellations: cancellations;
     is_running: bool;
   }
 
@@ -243,6 +241,7 @@ module Make(Eng : Engine) = struct
     t
 
   let query_transitions filter doc conf =
+    (* TODO catch any exceptions and put them on the internal queue *)
     let t = IntSet.fold (fun idx acc ->
       let state = resolve doc idx in
       if IntSet.is_empty state.State.children
@@ -670,7 +669,6 @@ module Make(Eng : Engine) = struct
       internal=[||];
       executions=[||];
       invocations=[||];
-      cancellations=[||];
       is_running=true;
     } in
     let transitions = TransitionSet.of_list doc.Document.initial_transitions in
@@ -687,8 +685,6 @@ module Make(Eng : Engine) = struct
     let engine = {engine with
       internal=[||];
       executions=[||];
-      invocations=[||];
-      cancellations=[||];
     } in
     let conf = engine.configuration in
     let enabled = select_eventless_transitions engine doc conf in
@@ -709,20 +705,25 @@ module Make(Eng : Engine) = struct
     {engine with configuration=conf}
 
   let stop engine doc =
-    let exec, cancel = IntSet.fold (fun idx acc ->
-      let exec, cancel = acc in
+    let exec = IntSet.fold (fun idx exec ->
       let state = resolve doc idx in
-      let exec = Array.append exec state.State.on_exit in
-      let cancel = Array.append cancel state.State.invocations in
-      exec, cancel
-    ) engine.configuration (engine.executions, engine.cancellations) in
-    {engine with executions=exec; cancellations=cancel}
+      Array.append exec state.State.on_exit
+    ) engine.configuration engine.executions in
+    {engine with executions=exec; invocations=[||]}
 
   let get_configuration engine = engine.configuration
-  let put_configuration engine configuration = {engine with configuration=configuration}
+  let get_configuration_names engine doc =
+    let configuration = engine.configuration in
+    IntSet.fold (fun idx acc ->
+      match resolve doc idx with
+      | {State.id=Some id} -> Array.append acc [| id |]
+      | _ -> acc
+    ) configuration [| |]
+
   let get_datamodel engine = engine.datamodel
   let put_datamodel engine datamodel = {engine with datamodel=datamodel}
-  let get_queues engine =
-    engine.internal, engine.executions, engine.invocations, engine.cancellations
+  let get_invocations engine = engine.invocations
+  let put_invocations engine invocations = {engine with invocations=invocations}
+  let get_queues engine = engine.internal, engine.executions
   let is_running engine = engine.is_running
 end
