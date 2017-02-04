@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 7947590814b11b065194ba5fddf9f3d2) *)
+(* DO NOT EDIT (digest: 50c2edc7464e7d1ac0451a7065901c93) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -889,8 +889,12 @@ let package_default =
        [
           ("statechart", ["src/lib"], []);
           ("statechart_analyzer", ["src/analyzer"], []);
-          ("statechart_format", ["src/format"], []);
+          ("statechart_datamodel", ["src/datamodel"], []);
+          ("statechart_datamodel_ecmascript",
+            ["src/datamodel/ecmascript"],
+            []);
           ("statechart_interpreter", ["src/interpreter"], []);
+          ("statechart_translator", ["src/translator"], []);
           ("statechart_scxml", ["src/scxml"], [])
        ];
      lib_c = [];
@@ -898,10 +902,12 @@ let package_default =
      includes =
        [
           ("test", ["src/lib"]);
+          ("src/translator", ["src/analyzer"; "src/datamodel"; "src/lib"]);
           ("src/scxml_cli", ["src/scxml"]);
-          ("src/scxml", ["src/analyzer"; "src/format"; "src/lib"]);
+          ("src/scxml", ["src/analyzer"; "src/lib"]);
           ("src/interpreter", ["src/lib"]);
-          ("src/format", ["src/lib"]);
+          ("src/datamodel/ecmascript", ["src/datamodel"; "src/lib"]);
+          ("src/datamodel", ["src/lib"]);
           ("src/analyzer", ["src/lib"])
        ]
   }
@@ -911,6 +917,6 @@ let conf = {MyOCamlbuildFindlib.no_automatic_syntax = false}
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
-# 915 "myocamlbuild.ml"
+# 921 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch dispatch_default;;

@@ -80,6 +80,8 @@ let parse_scxml line props children =
     binding=get_prop props "binding" |> parse_binding;
     children=children;
     line=line;
+    state_map=None;
+    state_count=0;
   }
 
 let parse_state line props children =
@@ -89,6 +91,7 @@ let parse_state line props children =
     initial=get_prop props "initial" |> parse_string_list;
     children=children;
     ancestors=[];
+    descendants=[];
     line=line;
   }
 
@@ -98,6 +101,7 @@ let parse_parallel line props children =
     id=get_prop props "id";
     children=children;
     ancestors=[];
+    descendants=[];
     line=line;
   }
 
@@ -121,6 +125,7 @@ let parse_initial line props children =
     Initial.idx=None;
     children=children;
     ancestors=[];
+    descendants=[];
     line=line;
   }
 
@@ -130,6 +135,7 @@ let parse_final line props children =
     id=get_prop props "id";
     children=children;
     ancestors=[];
+    descendants=[];
     line=line;
   }
 
@@ -157,6 +163,7 @@ let parse_history line props children =
     t=get_prop props "type" |> parse_history_type;
     children=children;
     ancestors=[];
+    descendants=[];
     line=line;
   }
 

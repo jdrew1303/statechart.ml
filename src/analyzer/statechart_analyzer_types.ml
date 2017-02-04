@@ -1,3 +1,10 @@
+module StateIDMap = Map.Make(struct
+  type t = string
+  let compare = compare
+end)
+
+type state_map = int StateIDMap.t
+
 module rec TYPES:
   sig
     type expr = Expr of string | ExprValue of string | ExprUnset
@@ -88,6 +95,8 @@ and Document:
       binding: TYPES.document_binding;
       children: TYPES.statechart_el list;
       line: int option;
+      state_map: state_map option;
+      state_count: int;
     }
   end = Document
 and State:
@@ -98,6 +107,7 @@ and State:
       initial: string list;
       children: TYPES.statechart_el list;
       ancestors: int list;
+      descendants: int list;
       line: int option;
     }
   end = State
@@ -108,6 +118,7 @@ and Parallel:
       id: string option;
       children: TYPES.statechart_el list;
       ancestors: int list;
+      descendants: int list;
       line: int option;
     }
   end = Parallel
@@ -128,6 +139,7 @@ and Initial:
       idx: int option;
       children: TYPES.statechart_el list;
       ancestors: int list;
+      descendants: int list;
       line: int option;
     }
   end = Initial
@@ -138,6 +150,7 @@ and Final:
       id: string option;
       children: TYPES.statechart_el list;
       ancestors: int list;
+      descendants: int list;
       line: int option;
     }
   end = Final
@@ -163,6 +176,7 @@ and History:
       children: TYPES.statechart_el list;
       t: TYPES.history_type;
       ancestors: int list;
+      descendants: int list;
       line: int option;
     }
   end = History

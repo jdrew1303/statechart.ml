@@ -1,4 +1,4 @@
 S src/**
 B _build/**
 
-PKG alcotest cmdliner humane_re markup
+PKG alcotest cmdliner flow_parser humane_re markup

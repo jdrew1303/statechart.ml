@@ -20,6 +20,7 @@ build-test: [
   ["ocaml" "setup.ml" "-test"]
 ]
 depends: [
+  "flow_parser" {>= "0.38.0"}
   "humane-re" {>= "0.1.0"}
   "piqilib" {>= "0.6"}
   "lambdasoup" {>= "0.6"}

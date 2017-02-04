@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 4a93055d8f155588a4ff6a484ae58d3a)
+# DO NOT EDIT (digest: 5c204770c14ba7105934baa7d2ab5e7b)
 version = "dev"
 description = "Statechart implementation for OCaml"
 archive(byte) = "statechart.cma"
@@ -7,11 +7,21 @@ archive(byte, plugin) = "statechart.cma"
 archive(native) = "statechart.cmxa"
 archive(native, plugin) = "statechart.cmxs"
 exists_if = "statechart.cma"
+package "translator" (
+ version = "dev"
+ description = "Statechart implementation for OCaml"
+ requires = "statechart statechart.analyzer statechart.datamodel"
+ archive(byte) = "statechart_translator.cma"
+ archive(byte, plugin) = "statechart_translator.cma"
+ archive(native) = "statechart_translator.cmxa"
+ archive(native, plugin) = "statechart_translator.cmxs"
+ exists_if = "statechart_translator.cma"
+)
+
 package "scxml" (
  version = "dev"
  description = "Statechart implementation for OCaml"
- requires =
- "statechart statechart.analyzer statechart.format humane_re markup"
+ requires = "statechart statechart.analyzer humane_re markup"
  archive(byte) = "statechart_scxml.cma"
  archive(byte, plugin) = "statechart_scxml.cma"
  archive(native) = "statechart_scxml.cmxa"
@@ -30,15 +40,25 @@ package "interpreter" (
  exists_if = "statechart_interpreter.cma"
 )
 
-package "format" (
+package "datamodel" (
  version = "dev"
  description = "Statechart implementation for OCaml"
  requires = "statechart"
- archive(byte) = "statechart_format.cma"
- archive(byte, plugin) = "statechart_format.cma"
- archive(native) = "statechart_format.cmxa"
- archive(native, plugin) = "statechart_format.cmxs"
- exists_if = "statechart_format.cma"
+ archive(byte) = "statechart_datamodel.cma"
+ archive(byte, plugin) = "statechart_datamodel.cma"
+ archive(native) = "statechart_datamodel.cmxa"
+ archive(native, plugin) = "statechart_datamodel.cmxs"
+ exists_if = "statechart_datamodel.cma"
+ package "ecmascript" (
+  version = "dev"
+  description = "Statechart implementation for OCaml"
+  requires = "statechart statechart.datamodel flow_parser"
+  archive(byte) = "statechart_datamodel_ecmascript.cma"
+  archive(byte, plugin) = "statechart_datamodel_ecmascript.cma"
+  archive(native) = "statechart_datamodel_ecmascript.cmxa"
+  archive(native, plugin) = "statechart_datamodel_ecmascript.cmxs"
+  exists_if = "statechart_datamodel_ecmascript.cma"
+ )
 )
 
 package "analyzer" (

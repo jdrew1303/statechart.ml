@@ -27,13 +27,29 @@ Library statechart_analyzer
                  Statechart_analyzer_printer,
                  Statechart_analyzer_types
 
-Library statechart_format
-  Path:          src/format
-  Findlibname:   format
+Library statechart_datamodel
+  Path:          src/datamodel
+  Findlibname:   datamodel
   FindlibParent: statechart
   BuildDepends:  statechart
-  Modules:       Statechart_format,
-                 Statechart_format_runtime
+  Modules:       Statechart_datamodel
+
+Library statechart_datamodel_ecmascript
+  Path:          src/datamodel/ecmascript
+  Findlibname:   ecmascript
+  FindlibParent: statechart_datamodel
+  BuildDepends:  statechart,
+                 statechart.datamodel,
+                 flow_parser (>= 0.38.0)
+  Modules:       Statechart_datamodel_ecmascript
+
+#Library statechart_format
+#  Path:          src/format
+#  Findlibname:   format
+#  FindlibParent: statechart
+#  BuildDepends:  statechart
+#  Modules:       Statechart_format,
+#                 Statechart_format_runtime
 
 Library statechart_interpreter
   Path:          src/interpreter
@@ -43,13 +59,22 @@ Library statechart_interpreter
   Modules:       Statechart_interpreter
   InternalModules: Statechart_interpreter_engine
 
+Library statechart_translator
+  Path:          src/translator
+  Findlibname:   translator
+  FindlibParent: statechart
+  BuildDepends:  statechart,
+                 statechart.analyzer,
+                 statechart.datamodel
+  Modules:       Statechart_translator
+
 Library statechart_scxml
   Path:          src/scxml
   Findlibname:   scxml
   FindlibParent: statechart
   BuildDepends:  statechart,
                  statechart.analyzer,
-                 statechart.format,
+#                 statechart.format,
                  humane_re (>= 0.1.0),
                  markup (>= 0.7.0)
   Modules:       Statechart_scxml
@@ -67,7 +92,9 @@ Document api
   BuildTools+:          ocamldoc
   Install:              true
   XOCamlBuildPath:      src
-  XOCamlBuildLibraries: statechart, statechart.format, statechart.scxml
+  XOCamlBuildLibraries: statechart,
+#                        statechart.format,
+                        statechart.scxml
 
 Executable test_statechart
   Path:             test

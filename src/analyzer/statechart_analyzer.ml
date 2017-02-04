@@ -1,13 +1,6 @@
 open Statechart_analyzer_types
 module SC = Statechart
 
-module StateIDMap = Map.Make(struct
-  type t = string
-  let compare = compare
-end)
-
-type state_map = int StateIDMap.t
-
 let map_id map id idx =
   match id with
   | Some id -> StateIDMap.add id idx map
