@@ -36,6 +36,8 @@ let print_kv_expr key value ws =
   match value with
   | Expr v -> print_kv_nq key v ws
   | ExprValue v -> print_kv key v ws
+  (* TODO *)
+  | ExprParsed v -> print_ws ws
   | ExprUnset -> print_ws ws
 
 let print_kv_list key value ws =
@@ -74,7 +76,7 @@ and print_parallel indent el =
 and print_transition indent el =
   print_type "transition" indent;
   print_kv_list "event" el.Transition.event " ";
-  print_kv_opt_nq "cond" el.Transition.cond " ";
+  print_kv_expr "cond" el.Transition.cond " ";
   print_kv_list "target" el.Transition.target ")";
   print_children indent el.Transition.children
 
@@ -118,22 +120,22 @@ and print_case indent el =
 
 and print_case_clause indent el =
   print_type "clause" indent;
-  print_kv_opt_nq "cond" el.CaseClause.cond ")";
+  print_kv_expr "cond" el.CaseClause.cond ")";
   print_children indent el.CaseClause.children
 
 and print_foreach indent el =
   print_string (indent ^ "each ");
-  print_opt el.Foreach.item "$$item";
+  (* print_opt el.Foreach.item "$$item"; *)
   print_string ", ";
-  print_opt el.Foreach.item "$$index";
+  (* print_opt el.Foreach.item "$$index"; *)
   print_string " in ";
-  print_opt el.Foreach.array "[]";
+  (* print_opt el.Foreach.array "[]"; *)
   print_children indent el.Foreach.children
 
 and print_log indent el =
   print_type "log" indent;
   print_kv_opt "label" el.Log.label " ";
-  print_kv_opt_nq "expr" el.Log.expr ")";
+  print_kv_expr "expr" el.Log.expr ")";
   print_type_close indent
 
 and print_data_model indent el =
@@ -145,19 +147,19 @@ and print_data indent el =
   print_string (indent ^ "- " );
   print_opt el.Data.id "$$id";
   print_string " = ";
-  match el with
+  (* match el with
   | {Data.expr=Some e} -> print_string e
   | {Data.src=Some e} -> print_string ("fetch(\"" ^ e ^ "\")")
-  | _ -> print_string "null";
+  | _ -> print_string "null"; *)
   print_string ";";
   (* TODO print children *)
   print_type_close indent
 
 and print_assign indent el =
   print_string (indent ^ "- " );
-  print_opt el.Assign.location "$$location";
+  (* print_opt el.Assign.location "$$location"; *)
   print_string " = ";
-  print_opt el.Assign.expr "null";
+  (* print_opt el.Assign.expr "null"; *)
   print_string ";";
   (* TODO print children *)
   print_type_close indent
@@ -169,15 +171,15 @@ and print_done_data indent el =
 
 and print_content indent el =
   print_type "content" indent;
-  print_kv_opt_nq "expr" el.Content.expr ")";
+  print_kv_expr "expr" el.Content.expr ")";
   (* TODO print children *)
   print_type_close indent
 
 and print_param indent el =
   print_type "param" indent;
   print_kv_opt "name" el.Param.name " ";
-  print_kv_opt_nq "expr" el.Param.expr " ";
-  print_kv_opt_nq "location" el.Param.location ")";
+  print_kv_expr "expr" el.Param.expr " ";
+  print_kv_expr "location" el.Param.location ")";
   print_type_close indent
 
 and print_script indent el =
@@ -192,7 +194,7 @@ and print_send indent el =
   print_kv_expr "type" el.Send.t " ";
   print_kv_expr "id" el.Send.id " ";
   print_kv_expr "delay" el.Send.delay " ";
-  print_kv_list "namelist" el.Send.namelist ")";
+  (* print_kv_list "namelist" el.Send.namelist ")"; *)
   print_type_close indent
 
 and print_cancel indent el =

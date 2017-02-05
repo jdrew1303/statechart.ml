@@ -7,13 +7,32 @@ module rec TYPES:
     type ref = TYPES.uint
 
     type expression_type = [
-      | `equal
-      | `not_equal
+      | `block
+
+      (* datatypes *)
+      | `null
       | `list
       | `map
+      | `bool
       | `int
       | `float
       | `string
+
+      (* BIF *)
+      | `raise
+      | `case
+      | `clause
+      | `foreach
+      | `log
+      | `assign
+      | `send
+      | `cancel
+
+      (* unary *)
+
+      (* binary *)
+      | `equal
+      | `not_equal
     ]
     type content =
       [
@@ -121,9 +140,61 @@ and Transition:
       targets: TYPES.ref list;
       events: string list;
       condition: TYPES.expression option;
-      type_: TYPES.transition_type;
+      t: TYPES.transition_type;
       on_transition: TYPES.expression list;
     }
   end = Transition
 
 include TYPES
+
+let bool_expr v =
+  {
+    Expression.t=`bool;
+    bool_val=Some v;
+    int_val=None;
+    float_val=None;
+    string_val=None;
+    args=[];
+  }
+
+let int_expr v =
+  {
+    Expression.t=`int;
+    bool_val=None;
+    int_val=Some v;
+    float_val=None;
+    string_val=None;
+    args=[];
+  }
+
+let float_expr v =
+  {
+    Expression.t=`float;
+    bool_val=None;
+    int_val=None;
+    float_val=Some v;
+    string_val=None;
+    args=[];
+  }
+
+let string_expr v =
+  {
+    Expression.t=`string;
+    bool_val=None;
+    int_val=None;
+    float_val=None;
+    string_val=Some v;
+    args=[];
+  }
+
+let complex_expr t args =
+  {
+    Expression.t=t;
+    bool_val=None;
+    int_val=None;
+    float_val=None;
+    string_val=None;
+    args=args;
+  }
+
+let null = complex_expr `null []

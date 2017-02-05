@@ -113,10 +113,11 @@ let parse_transition_type t =
 let parse_transition line props children =
   Transition {
     Transition.event=get_prop props "event" |> parse_string_list;
-    cond=get_prop props "cond";
+    cond=get_prop_expr props "cond";
     target=get_prop props "target" |> parse_string_list;
     t=get_prop props "type" |> parse_transition_type;
     children=children;
+    ancestors=[];
     line=line;
   }
 
@@ -194,7 +195,7 @@ let rec parse_if_children current prev children =
 let parse_if line props children =
   let rev_children = List.rev children in
   let current, prev = parse_if_children [] [] rev_children in
-  let cond = get_prop props "cond" in
+  let cond = get_prop_expr props "cond" in
   let _, children = finish_if_child current prev cond line in
   Case {
     Case.children=children;
@@ -203,30 +204,30 @@ let parse_if line props children =
 
 let parse_if_else line props =
   CaseClause {
-    CaseClause.cond=get_prop props "cond";
+    CaseClause.cond=get_prop_expr props "cond";
     children=[];
     line=line;
   }
 
 let parse_else line =
   CaseClause {
-    CaseClause.cond=None;
+    CaseClause.cond=ExprUnset;
     children=[];
     line=line;
   }
 
 let parse_foreach line props children =
   Foreach {
-    Foreach.array=get_prop props "array";
-    item=get_prop props "item";
-    index=get_prop props "index";
+    Foreach.array=get_prop_expr props "array";
+    item=get_prop_expr props "item";
+    index=get_prop_expr props "index";
     children=children;
     line=line;
   }
 
 let parse_log line props children =
   Log {
-    Log.expr=get_prop props "expr";
+    Log.expr=get_prop_expr props "expr";
     label=get_prop props "label";
     line=line;
   }
@@ -241,7 +242,7 @@ let parse_data line props children =
   Data {
     Data.id=get_prop props "id";
     src=get_prop props "src";
-    expr=get_prop props "expr";
+    expr=get_prop_expr props "expr";
     (* TODO *)
     children=Some "";
     line=line;
@@ -249,8 +250,8 @@ let parse_data line props children =
 
 let parse_assign line props children =
   Assign {
-    Assign.location=get_prop props "location";
-    expr=get_prop props "expr";
+    Assign.location=get_prop_expr props "location";
+    expr=get_prop_expr props "expr";
     (* TODO *)
     children=Some "";
     line=line;
@@ -264,7 +265,7 @@ let parse_done_data line children =
 
 let parse_content line props children =
   Content {
-    Content.expr=get_prop props "expr";
+    Content.expr=get_prop_expr props "expr";
     (* TODO *)
     children=Some "";
     line=line;
@@ -273,8 +274,8 @@ let parse_content line props children =
 let parse_param line props =
   Param {
     Param.name=get_prop props "name";
-    expr=get_prop props "expr";
-    location=get_prop props "location";
+    expr=get_prop_expr props "expr";
+    location=get_prop_expr props "location";
     line=line;
   }
 
@@ -293,7 +294,7 @@ let parse_send line props children =
     t=get_prop_expr props "type";
     id=get_prop_expr props "id";
     delay=get_prop_expr props "delay";
-    namelist=get_prop props "namelist" |> parse_string_list;
+    namelist=get_prop props "namelist" |> parse_string_list |> (List.map (fun s -> Expr s));
     children=children;
     line=line;
   }
@@ -309,7 +310,7 @@ let parse_invoke line props children =
     Invoke.t=get_prop_expr props "type";
     src=get_prop_expr props "src";
     id=get_prop_expr props "id";
-    namelist=get_prop props "namelist" |> parse_string_list;
+    namelist=get_prop props "namelist" |> parse_string_list |> (List.map (fun s -> Expr s));
     autoforward=get_prop_bool props "autoforward";
     children=children;
     line=line;

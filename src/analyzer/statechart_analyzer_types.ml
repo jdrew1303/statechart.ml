@@ -7,7 +7,10 @@ type state_map = int StateIDMap.t
 
 module rec TYPES:
   sig
-    type expr = Expr of string | ExprValue of string | ExprUnset
+    type expr = Expr of string
+              | ExprValue of string
+              | ExprParsed of Statechart.Expression.t
+              | ExprUnset
     type document_binding =
       [
         | `early
@@ -126,10 +129,11 @@ and Transition:
   sig
     type t = {
       event: string list;
-      cond: string option;
+      cond: TYPES.expr;
       target: string list;
       t: TYPES.transition_type;
       children: TYPES.statechart_el list;
+      ancestors: int list;
       line: int option;
     }
   end = Transition
@@ -197,7 +201,7 @@ and Case:
 and CaseClause:
   sig
     type t = {
-      cond: string option;
+      cond: TYPES.expr;
       children: TYPES.statechart_el list;
       line: int option;
     }
@@ -205,9 +209,9 @@ and CaseClause:
 and Foreach:
   sig
     type t = {
-      array: string option;
-      item: string option;
-      index: string option;
+      array: TYPES.expr;
+      item: TYPES.expr;
+      index: TYPES.expr;
       children: TYPES.statechart_el list;
       line: int option;
     }
@@ -216,7 +220,7 @@ and Log:
   sig
     type t = {
       label: string option;
-      expr: string option;
+      expr: TYPES.expr;
       line: int option;
     }
   end = Log
@@ -232,7 +236,7 @@ and Data:
     type t = {
       id: string option;
       src: string option;
-      expr: string option;
+      expr: TYPES.expr;
       children: string option; (* TODO make this a more complex type *)
       line: int option;
     }
@@ -240,8 +244,8 @@ and Data:
 and Assign:
   sig
     type t = {
-      location: string option;
-      expr: string option;
+      location: TYPES.expr;
+      expr: TYPES.expr;
       children: string option; (* TODO make this a more complex type *)
       line: int option;
     }
@@ -256,7 +260,7 @@ and DoneData:
 and Content:
   sig
     type t = {
-      expr: string option;
+      expr: TYPES.expr;
       children: string option; (* TODO make this a more complex type *)
       line: int option;
     }
@@ -265,8 +269,8 @@ and Param:
   sig
     type t = {
       name: string option;
-      expr: string option;
-      location: string option;
+      expr: TYPES.expr;
+      location: TYPES.expr;
       line: int option;
     }
   end = Param
@@ -286,7 +290,7 @@ and Send:
       t: TYPES.expr;
       id: TYPES.expr;
       delay: TYPES.expr;
-      namelist: string list;
+      namelist: TYPES.expr list;
       children: TYPES.statechart_el list;
       line: int option;
     }
@@ -304,7 +308,7 @@ and Invoke:
       t: TYPES.expr;
       src: TYPES.expr;
       id: TYPES.expr;
-      namelist: string list;
+      namelist: TYPES.expr list;
       autoforward: bool option;
       children: TYPES.statechart_el list;
       line: int option;

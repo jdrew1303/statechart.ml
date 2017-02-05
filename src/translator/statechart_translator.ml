@@ -5,17 +5,24 @@ open Statechart_datamodel
 exception MissingAnalysis
 
 type child_type = State of int
-                | OnEnter of Tgt.expression
-                | OnExit of Tgt.expression
+                | OnEntry of Tgt.expression list
+                | OnExit of Tgt.expression list
                 | Transition of Tgt.transition
                 | Invoke of Tgt.invoke
-                | None
+                | Pass
 
 (* TODO throw an exception *)
 let unwrap maybe =
   match maybe with
   | Some value -> value
   | None -> raise MissingAnalysis
+
+let unwrap_expr expr =
+  match expr with
+  | Src.Expr _ -> raise MissingAnalysis
+  | Src.ExprValue v -> Tgt.string_expr v
+  | Src.ExprParsed v -> v
+  | Src.ExprUnset -> Tgt.null
 
 let get_parent ancestors =
   match ancestors with
@@ -44,10 +51,10 @@ let empty_state =
     history_type=None;
   }
 
-let rec translate_state states idmap data_model state =
+let rec translate_state states idmap state =
   let idx = unwrap state.Src.State.idx in
   let children, on_enter, on_exit, trans, invs =
-    translate_children states idmap data_model state.Src.State.children in
+    translate_children states idmap state.Src.State.children in
   let ancestors = state.Src.State.ancestors in
   Array.set states idx {
     Tgt.State.idx=idx;
@@ -70,10 +77,10 @@ let rec translate_state states idmap data_model state =
   };
   idx
 
-and translate_parallel states idmap data_model state =
+and translate_parallel states idmap state =
   let idx = unwrap state.Src.Parallel.idx in
   let children, on_enter, on_exit, trans, invs =
-    translate_children states idmap data_model state.Src.Parallel.children in
+    translate_children states idmap state.Src.Parallel.children in
   let ancestors = state.Src.Parallel.ancestors in
   Array.set states idx {
     Tgt.State.idx=idx;
@@ -94,10 +101,10 @@ and translate_parallel states idmap data_model state =
   };
   idx
 
-and translate_initial states idmap data_model state =
+and translate_initial states idmap state =
   let idx = unwrap state.Src.Initial.idx in
   let children, on_enter, on_exit, trans, invs =
-    translate_children states idmap data_model state.Src.Initial.children in
+    translate_children states idmap state.Src.Initial.children in
   let ancestors = state.Src.Initial.ancestors in
   Array.set states idx {
     Tgt.State.idx=idx;
@@ -118,10 +125,10 @@ and translate_initial states idmap data_model state =
   };
   idx
 
-and translate_final states idmap data_model state =
+and translate_final states idmap state =
   let idx = unwrap state.Src.Final.idx in
   let children, on_enter, on_exit, trans, invs =
-    translate_children states idmap data_model state.Src.Final.children in
+    translate_children states idmap state.Src.Final.children in
   let ancestors = state.Src.Final.ancestors in
   Array.set states idx {
     Tgt.State.idx=idx;
@@ -142,10 +149,10 @@ and translate_final states idmap data_model state =
   };
   idx
 
-and translate_history states idmap data_model state =
+and translate_history states idmap state =
   let idx = unwrap state.Src.History.idx in
   let children, on_enter, on_exit, trans, invs =
-    translate_children states idmap data_model state.Src.History.children in
+    translate_children states idmap state.Src.History.children in
   let ancestors = state.Src.History.ancestors in
   Array.set states idx {
     Tgt.State.idx=idx;
@@ -166,54 +173,147 @@ and translate_history states idmap data_model state =
   };
   idx
 
-and translate_child states idmap data_model child =
-  match child with
-  | Src.State c -> State (translate_state states idmap data_model c)
-  | Src.Parallel c -> State (translate_parallel states idmap data_model c)
-  | Src.Initial c -> State (translate_initial states idmap data_model c)
-  | Src.Final c -> State (translate_final states idmap data_model c)
-  | Src.History c -> State (translate_history states idmap data_model c)
-  | _ -> None
+and translate_transition states idmap transition =
+  let ancestors = transition.Src.Transition.ancestors in
+  let parent = get_parent ancestors in
+  let condition = match transition.Src.Transition.cond with
+  | Src.ExprUnset -> None
+  | cond -> Some (unwrap_expr cond) in
+  let children = translate_executables transition.Src.Transition.children in
+  {
+    (* TODO *)
+    Tgt.Transition.scope=0;
+    depth=List.length ancestors;
+    priority=unwrap parent;
+    source=parent;
+    targets=resolve_list transition.Src.Transition.target idmap;
+    events=transition.Src.Transition.event;
+    condition=condition;
+    t=transition.Src.Transition.t;
+    on_transition=children;
+  }
 
-and translate_children states idmap data_model children =
+and translate_child states idmap child =
+  match child with
+  | Src.State c -> State (translate_state states idmap c)
+  | Src.Parallel c -> State (translate_parallel states idmap c)
+  | Src.Transition t -> Transition (translate_transition states idmap t)
+  | Src.Initial c -> State (translate_initial states idmap c)
+  | Src.Final c -> State (translate_final states idmap c)
+  | Src.OnEntry c -> OnEntry (translate_executables c.Src.OnEntry.children)
+  | Src.OnExit c -> OnExit (translate_executables c.Src.OnExit.children)
+  | Src.History c -> State (translate_history states idmap c)
+  (* TODO datamodel *)
+  (* TODO invoke *)
+  | _ -> Pass
+
+and translate_children states idmap children =
   let init = [], [], [], [], [] in
   List.fold_right (fun child acc ->
     let idxs, on_enter, on_exit, trans, invs = acc in
-    match translate_child states idmap data_model child with
+    match translate_child states idmap child with
     | State idx -> idx :: idxs, on_enter, on_exit, trans, invs
-    | OnEnter e -> idxs, e :: on_enter, on_exit, trans, invs
-    | OnExit e -> idxs, on_enter, e :: on_exit, trans, invs
+    | OnEntry e -> idxs, (List.append e on_enter), on_exit, trans, invs
+    | OnExit e -> idxs, on_enter, (List.append e on_enter), trans, invs
     | Transition t -> idxs, on_enter, on_exit, t :: trans, invs
     | Invoke i -> idxs, on_enter, on_exit, trans, i :: invs
-    | None -> acc
+    | Pass -> acc
   ) children init
 
-let translate_document_child states idmap data_model child =
+and translate_raise raise =
+  let event = unwrap raise.Src.Raise.event in
+  Tgt.complex_expr `raise [Tgt.string_expr event]
+
+and translate_case case =
+  let children = List.map translate_case_clause case.Src.Case.children in
+  Tgt.complex_expr `case children
+
+and translate_case_clause clause =
+  Tgt.complex_expr `clause [
+    unwrap_expr clause.Src.CaseClause.cond;
+    Tgt.complex_expr `block (translate_executables clause.Src.CaseClause.children);
+  ]
+
+and translate_foreach foreach =
+  Tgt.complex_expr `foreach [
+    unwrap_expr foreach.Src.Foreach.array;
+    unwrap_expr foreach.Src.Foreach.item;
+    unwrap_expr foreach.Src.Foreach.index;
+    Tgt.complex_expr `block (translate_executables foreach.Src.Foreach.children);
+  ]
+
+and translate_log log =
+  Tgt.complex_expr `log [
+    (match log.Src.Log.label with
+    | Some l -> Tgt.string_expr l
+    | None -> Tgt.null);
+    unwrap_expr log.Src.Log.expr;
+  ]
+
+and translate_assign assign =
+  Tgt.complex_expr `assign [
+    unwrap_expr assign.Src.Assign.location;
+    unwrap_expr assign.Src.Assign.expr;
+  ]
+
+and translate_send send =
+  Tgt.complex_expr `send [
+    unwrap_expr send.Src.Send.event;
+    unwrap_expr send.Src.Send.target;
+    unwrap_expr send.Src.Send.t;
+    unwrap_expr send.Src.Send.id;
+    unwrap_expr send.Src.Send.delay;
+    (* TODO handle namelist *)
+    (* TODO handle children *)
+  ]
+
+and translate_cancel cancel =
+  Tgt.complex_expr `cancel [
+    unwrap_expr cancel.Src.Cancel.sendid;
+  ]
+
+and translate_executable child =
+  match child with
+  | Src.Raise e -> [translate_raise e]
+  | Src.Case e -> [translate_case e]
+  | Src.Foreach e -> [translate_foreach e]
+  | Src.Log e -> [translate_log e]
+  (* TODO datamodel? *)
+  | Src.Assign e -> [translate_assign e]
+  (* TODO done data? *)
+  (* TODO content? *)
+  (* TODO param? *)
+  | Src.Send e -> [translate_send e]
+  | Src.Cancel e -> [translate_cancel e]
+  (* TODO invoke? *)
+  | Src.Finalize e -> translate_executables e.Src.Finalize.children
+  | _ -> []
+
+and translate_executables children =
+  List.fold_right (fun child acc ->
+    List.append (translate_executable child) acc
+  ) children []
+
+let translate_document_child states idmap child =
   let _idx = match child with
-  | Src.State c -> translate_state states idmap data_model c
-  | Src.Parallel c -> translate_parallel states idmap data_model c
-  | Src.Final c -> translate_final states idmap data_model c
-  | Src.History c -> translate_history states idmap data_model c
-  (* TODO handle data_model *)
+  | Src.State c -> translate_state states idmap c
+  | Src.Parallel c -> translate_parallel states idmap c
+  | Src.Final c -> translate_final states idmap c
+  | Src.History c -> translate_history states idmap c
+  (* TODO handle datamodel *)
   (* TODO handle script *)
   | _ -> -1 in
   ()
 
-let translate_document_children document data_model =
+let translate_document_children document =
   let idmap = unwrap document.Src.Document.state_map in
   let states = Array.make document.Src.Document.state_count empty_state in
-  List.iter (translate_document_child states idmap data_model) document.Src.Document.children;
+  List.iter (translate_document_child states idmap) document.Src.Document.children;
   states
 
-let select_data_model datamodels doc =
-  match doc.Src.Document.data_model with
-  | Some dm -> DatamodelMap.find dm datamodels
-  | None -> DatamodelMap.find "null" datamodels
-
-let translate document datamodels =
+let translate document =
   (* TODO handle initial *)
-  let data_model = select_data_model datamodels document in
-  let states = translate_document_children document data_model in
+  let states = translate_document_children document in
   {
     Tgt.Document.name=document.Src.Document.name;
     initial_transitions=[];
