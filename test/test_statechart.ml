@@ -40,7 +40,7 @@ let w3c_tests kind required =
   List.rev !tests
 
 let () =
-  Alcotest.run "W3C" [
+  Alcotest.run "Statechart" [
     "W3C SCXML (Mandatory)", w3c_tests "mandatory" true;
     "W3C SCXML (Optional)", w3c_tests "optional" false;
   ]

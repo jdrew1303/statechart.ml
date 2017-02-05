@@ -15,7 +15,7 @@ remove: [
   ["ocaml" "setup.ml" "-uninstall"]
 ]
 build-test: [
-  ["make" "test/w3c"]
+  [make "test/w3c"]
   ["ocaml" "setup.ml" "-configure" "--enable-tests"]
   ["ocaml" "setup.ml" "-build"]
   ["ocaml" "setup.ml" "-test"]
