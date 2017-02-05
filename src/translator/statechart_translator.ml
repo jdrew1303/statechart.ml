@@ -1,8 +1,5 @@
 module Src = Statechart_analyzer_types
 module Tgt = Statechart
-open Statechart_datamodel
-
-exception MissingAnalysis
 
 type child_type = State of int
                 | OnEntry of Tgt.expression list
@@ -11,7 +8,7 @@ type child_type = State of int
                 | Invoke of Tgt.invoke
                 | Pass
 
-(* TODO throw an exception *)
+exception MissingAnalysis
 let unwrap maybe =
   match maybe with
   | Some value -> value
@@ -29,8 +26,16 @@ let get_parent ancestors =
   | parent :: _ -> Some parent
   | _ -> None
 
+exception UnresolvableState of string
 let resolve_list l idmap =
-  List.map (fun key -> Src.StateIDMap.find key idmap) l
+  List.map (fun key ->
+    try
+      Src.StateIDMap.find key idmap
+    with
+    | _ -> (
+      raise (UnresolvableState key)
+    )
+  ) l
 
 let empty_state =
   {

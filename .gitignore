@@ -25,3 +25,7 @@ setup.log
 /lib
 /node_modules
 *.log
+
+# test data
+/test/w3c
+*.tar.gz

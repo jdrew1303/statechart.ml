@@ -25,14 +25,19 @@ let get_ns_prop props ns name =
 let get_prop props name =
   get_ns_prop props "" name
 
-let get_prop_expr props name =
+let get_prop_expr_alias props name append =
   match get_prop props name with
   | Some value -> ExprValue value
   | None -> (
-    match get_prop props (name ^ "expr") with
+    match get_prop props (name ^ append) with
     | Some expr -> Expr expr
     | None -> ExprUnset
   )
+
+let get_prop_expr props name =
+  match get_prop props name with
+  | Some expr -> Expr expr
+  | None -> ExprUnset
 
 let get_prop_bool props name =
   match get_prop props name with
@@ -289,11 +294,11 @@ let parse_script line props children =
 
 let parse_send line props children =
   Send {
-    Send.event=get_prop_expr props "event";
-    target=get_prop_expr props "target";
-    t=get_prop_expr props "type";
-    id=get_prop_expr props "id";
-    delay=get_prop_expr props "delay";
+    Send.event=get_prop_expr_alias props "event" "expr";
+    target=get_prop_expr_alias props "target" "expr";
+    t=get_prop_expr_alias props "type" "expr";
+    id=get_prop_expr_alias props "id" "location";
+    delay=get_prop_expr_alias props "delay" "expr";
     namelist=get_prop props "namelist" |> parse_string_list |> (List.map (fun s -> Expr s));
     children=children;
     line=line;
@@ -301,15 +306,15 @@ let parse_send line props children =
 
 let parse_cancel line props =
   Cancel {
-    Cancel.sendid=get_prop_expr props "sendid";
+    Cancel.sendid=get_prop_expr_alias props "sendid" "expr";
     line=line;
   }
 
 let parse_invoke line props children =
   Invoke {
-    Invoke.t=get_prop_expr props "type";
-    src=get_prop_expr props "src";
-    id=get_prop_expr props "id";
+    Invoke.t=get_prop_expr_alias props "type" "expr";
+    src=get_prop_expr_alias props "src" "expr";
+    id=get_prop_expr_alias props "id" "location";
     namelist=get_prop props "namelist" |> parse_string_list |> (List.map (fun s -> Expr s));
     autoforward=get_prop_bool props "autoforward";
     children=children;

@@ -22,7 +22,8 @@ Library statechart_analyzer
   Path:          src/analyzer
   Findlibname:   analyzer
   FindlibParent: statechart
-  BuildDepends:  statechart
+  BuildDepends:  statechart,
+                 statechart.datamodel
   Modules:       Statechart_analyzer,
                  Statechart_analyzer_printer,
                  Statechart_analyzer_types
@@ -64,8 +65,7 @@ Library statechart_translator
   Findlibname:   translator
   FindlibParent: statechart
   BuildDepends:  statechart,
-                 statechart.analyzer,
-                 statechart.datamodel
+                 statechart.analyzer
   Modules:       Statechart_translator
 
 Library statechart_scxml
@@ -102,7 +102,15 @@ Executable test_statechart
   Build$:           flag(tests)
   CompiledObject:   best
   Install:          false
-  BuildDepends:     statechart, alcotest (>= 0.4.1)
+  BuildDepends:     statechart,
+                    statechart.analyzer,
+                    statechart.datamodel,
+                    statechart.datamodel.ecmascript,
+                    statechart.interpreter,
+                    statechart.translator,
+                    statechart.scxml,
+                    alcotest (>= 0.4.1),
+                    crunch (>= 1.4.1)
 
 Test test_statechart
   Run$:             flag(tests)

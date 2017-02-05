@@ -39,3 +39,9 @@ configure:
 .PHONY: build doc test all install uninstall reinstall clean distclean configure
 
 # OASIS_STOP
+
+test/w3c: test/w3c.tar.gz
+	@tar -C test -xzf $<
+
+test/w3c.tar.gz:
+	@curl -L -o $@ https://github.com/statechart/scxml-test-suite/releases/download/1.0/w3c.tar.gz

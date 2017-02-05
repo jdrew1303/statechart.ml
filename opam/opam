@@ -15,6 +15,7 @@ remove: [
   ["ocaml" "setup.ml" "-uninstall"]
 ]
 build-test: [
+  ["make" "test/w3c"]
   ["ocaml" "setup.ml" "-configure" "--enable-tests"]
   ["ocaml" "setup.ml" "-build"]
   ["ocaml" "setup.ml" "-test"]
@@ -26,6 +27,7 @@ depends: [
   "lambdasoup" {>= "0.6"}
   "markup" {>= "0.7"}
   "alcotest" {test & >= "0.4.1"}
+  "crunch" {test & >= "1.4.1"}
   "ocamlfind" {build}
 ]
 available: [ ocaml-version >= "4.01.0" ]

@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 3a27caecf7a363b439d26db6ae61e408)
+# DO NOT EDIT (digest: b47aa9116aa3add8091d6c8ba8c3b8a7)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -16,12 +16,13 @@ true: annot, bin_annot
 "_darcs": not_hygienic
 # Library statechart
 "src/lib/statechart.cmxs": use_statechart
-# Library statechart_analyzer
-"src/analyzer/statechart_analyzer.cmxs": use_statechart_analyzer
-<src/analyzer/*.ml{,i,y}>: use_statechart
 # Library statechart_datamodel
 "src/datamodel/statechart_datamodel.cmxs": use_statechart_datamodel
 <src/datamodel/*.ml{,i,y}>: use_statechart
+# Library statechart_analyzer
+"src/analyzer/statechart_analyzer.cmxs": use_statechart_analyzer
+<src/analyzer/*.ml{,i,y}>: use_statechart
+<src/analyzer/*.ml{,i,y}>: use_statechart_datamodel
 # Library statechart_datamodel_ecmascript
 "src/datamodel/ecmascript/statechart_datamodel_ecmascript.cmxs": use_statechart_datamodel_ecmascript
 <src/datamodel/ecmascript/*.ml{,i,y}>: package(flow_parser)
@@ -41,24 +42,47 @@ true: annot, bin_annot
 <src/scxml/*.ml{,i,y}>: package(markup)
 <src/scxml/*.ml{,i,y}>: use_statechart
 <src/scxml/*.ml{,i,y}>: use_statechart_analyzer
+<src/scxml/*.ml{,i,y}>: use_statechart_datamodel
 # Executable statechart-scxml
 <src/scxml_cli/scxml.{native,byte}>: package(cmdliner)
 <src/scxml_cli/scxml.{native,byte}>: package(humane_re)
 <src/scxml_cli/scxml.{native,byte}>: package(markup)
 <src/scxml_cli/scxml.{native,byte}>: use_statechart
 <src/scxml_cli/scxml.{native,byte}>: use_statechart_analyzer
+<src/scxml_cli/scxml.{native,byte}>: use_statechart_datamodel
 <src/scxml_cli/scxml.{native,byte}>: use_statechart_scxml
 <src/scxml_cli/*.ml{,i,y}>: package(cmdliner)
 <src/scxml_cli/*.ml{,i,y}>: package(humane_re)
 <src/scxml_cli/*.ml{,i,y}>: package(markup)
 <src/scxml_cli/*.ml{,i,y}>: use_statechart
 <src/scxml_cli/*.ml{,i,y}>: use_statechart_analyzer
+<src/scxml_cli/*.ml{,i,y}>: use_statechart_datamodel
 <src/scxml_cli/*.ml{,i,y}>: use_statechart_scxml
 # Executable test_statechart
 <test/test_statechart.{native,byte}>: package(alcotest)
+<test/test_statechart.{native,byte}>: package(crunch)
+<test/test_statechart.{native,byte}>: package(flow_parser)
+<test/test_statechart.{native,byte}>: package(humane_re)
+<test/test_statechart.{native,byte}>: package(markup)
 <test/test_statechart.{native,byte}>: use_statechart
+<test/test_statechart.{native,byte}>: use_statechart_analyzer
+<test/test_statechart.{native,byte}>: use_statechart_datamodel
+<test/test_statechart.{native,byte}>: use_statechart_datamodel_ecmascript
+<test/test_statechart.{native,byte}>: use_statechart_interpreter
+<test/test_statechart.{native,byte}>: use_statechart_scxml
+<test/test_statechart.{native,byte}>: use_statechart_translator
 <test/*.ml{,i,y}>: package(alcotest)
+<test/*.ml{,i,y}>: package(crunch)
+<test/*.ml{,i,y}>: package(flow_parser)
+<test/*.ml{,i,y}>: package(humane_re)
+<test/*.ml{,i,y}>: package(markup)
 <test/*.ml{,i,y}>: use_statechart
+<test/*.ml{,i,y}>: use_statechart_analyzer
+<test/*.ml{,i,y}>: use_statechart_datamodel
+<test/*.ml{,i,y}>: use_statechart_datamodel_ecmascript
+<test/*.ml{,i,y}>: use_statechart_interpreter
+<test/*.ml{,i,y}>: use_statechart_scxml
+<test/*.ml{,i,y}>: use_statechart_translator
 # OASIS_STOP
 "lib": -traverse
 "lib": not_hygienic
