@@ -41,7 +41,7 @@ configure:
 # OASIS_STOP
 
 test/w3c: test/w3c.tar.gz
-	@tar -C test -xzf $<
+	@tar -xf $< -C test
 
 test/w3c.tar.gz:
-	@curl -L -o $@ https://github.com/statechart/scxml-test-suite/releases/download/1.0/w3c.tar.gz
+	@wget -P test https://github.com/statechart/scxml-test-suite/releases/download/1.0/w3c.tar.gz
