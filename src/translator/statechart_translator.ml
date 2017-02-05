@@ -14,9 +14,10 @@ let unwrap maybe =
   | Some value -> value
   | None -> raise MissingAnalysis
 
+exception UnparsedExpression of string
 let unwrap_expr expr =
   match expr with
-  | Src.Expr _ -> raise MissingAnalysis
+  | Src.Expr v -> raise (UnparsedExpression v)
   | Src.ExprValue v -> Tgt.string_expr v
   | Src.ExprParsed v -> v
   | Src.ExprUnset -> Tgt.null
@@ -189,7 +190,8 @@ and translate_transition states idmap transition =
     (* TODO *)
     Tgt.Transition.scope=0;
     depth=List.length ancestors;
-    priority=unwrap parent;
+    (* TODO *)
+    priority=0;
     source=parent;
     targets=resolve_list transition.Src.Transition.target idmap;
     events=transition.Src.Transition.event;

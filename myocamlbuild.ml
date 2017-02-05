@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: da558450e43559a0aa531d5e782e8267) *)
+(* DO NOT EDIT (digest: a7bf64cbd6365b491d357f32d57e6997) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -912,7 +912,15 @@ let package_default =
                "src/translator"
             ]);
           ("src/translator", ["src/analyzer"; "src/lib"]);
-          ("src/scxml_cli", ["src/scxml"]);
+          ("src/scxml_cli",
+            [
+               "src/analyzer";
+               "src/datamodel";
+               "src/datamodel/ecmascript";
+               "src/interpreter";
+               "src/scxml";
+               "src/translator"
+            ]);
           ("src/scxml", ["src/analyzer"; "src/lib"]);
           ("src/interpreter", ["src/lib"]);
           ("src/datamodel/ecmascript", ["src/datamodel"; "src/lib"]);
@@ -926,6 +934,6 @@ let conf = {MyOCamlbuildFindlib.no_automatic_syntax = false}
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
-# 930 "myocamlbuild.ml"
+# 938 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch dispatch_default;;

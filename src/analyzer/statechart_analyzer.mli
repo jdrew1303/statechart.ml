@@ -1,3 +1,3 @@
 open Statechart_analyzer_types
-val assign_state_ids : document -> document
-val analyze : document -> document
+open Statechart_datamodel
+val analyze : document -> datamodel_map -> document

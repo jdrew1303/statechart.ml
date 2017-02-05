@@ -82,7 +82,12 @@ Library statechart_scxml
 Executable statechart-scxml
   Path:         src/scxml_cli
   MainIs:       scxml.ml
-  BuildDepends: statechart.scxml,
+  BuildDepends: statechart.analyzer,
+                statechart.datamodel,
+                statechart.datamodel.ecmascript,
+                statechart.interpreter,
+                statechart.translator,
+                statechart.scxml,
                 cmdliner (>= 0.9)
   CompiledObject: best
 

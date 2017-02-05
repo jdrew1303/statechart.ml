@@ -5,15 +5,6 @@ open Parser_common
 module Ast = Spider_monkey_ast
 module Err = Parse_error
 
-let default_expr = {
-  Expression.t=`int;
-  bool_val=None;
-  int_val=Some 1;
-  float_val=None;
-  string_val=None;
-  args=[];
-}
-
 let translate_binary_operator o =
   match o with
   | Ast.Expression.Binary.Equal -> `equal
@@ -24,30 +15,25 @@ let rec translate_expression expr =
   let _loc, expr = expr in
   match expr with
   | Ast.Expression.Binary a -> translate_binary a
-  | _ -> default_expr
+  | _ -> null
 
 and translate_binary a =
-  {
-    Expression.t=translate_binary_operator a.Ast.Expression.Binary.operator;
-    bool_val=None;
-    int_val=None;
-    float_val=None;
-    string_val=None;
-    args=[
-      translate_expression a.Ast.Expression.Binary.left;
-      translate_expression a.Ast.Expression.Binary.right;
-    ];
-  }
+  let op = translate_binary_operator a.Ast.Expression.Binary.operator in
+  let left = translate_expression a.Ast.Expression.Binary.left in
+  let right = translate_expression a.Ast.Expression.Binary.right in
+  complex_expr op [left; right]
 
 let translate_statement statement =
   let _loc, statement = statement in
   match statement with
-  | Ast.Statement.Expression e -> translate_expression e.Ast.Statement.Expression.expression
-  | _ -> default_expr
+  | Ast.Statement.Expression e ->
+    translate_expression e.Ast.Statement.Expression.expression
+  | _ -> null
 
 let translate_program ast =
   let loc, statements, _comments = ast in
-  List.map translate_statement statements
+  let statements = List.map translate_statement statements in
+  complex_expr `block statements
 
 let translate_errors errors =
   List.map (fun error ->

@@ -4,10 +4,15 @@ open Statechart_analyzer
 open Statechart_analyzer_types
 open Statechart_analyzer_printer
 
+let datamodels =
+  Statechart_datamodel.of_list [
+    "ecmascript", Statechart_datamodel_ecmascript.parse;
+  ]
+
 let handle_result res =
   match res with
   | Some doc ->
-    let doc = assign_state_ids doc in
+    let doc = analyze doc datamodels in
     dump_document doc
   | None -> print_endline "Invalid document"
 

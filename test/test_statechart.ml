@@ -11,6 +11,11 @@ let get_description path =
   close_in chn;
   desc
 
+let datamodels =
+  Statechart_datamodel.of_list [
+    "ecmascript", Statechart_datamodel_ecmascript.parse;
+  ]
+
 let w3_test path description () =
   prerr_endline "PATH";
   prerr_endline ("  " ^ path);
@@ -20,8 +25,8 @@ let w3_test path description () =
   match Statechart_scxml.from_channel channel with
   | None -> ()
   | Some document -> (
-    let document = Statechart_analyzer.analyze document in
-    (* let document = Statechart_translator.translate document in *)
+    let document = Statechart_analyzer.analyze document datamodels in
+    let document = Statechart_translator.translate document in
     ()
   )
 
