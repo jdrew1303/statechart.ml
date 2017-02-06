@@ -128,6 +128,7 @@ and Parallel:
 and Transition:
   sig
     type t = {
+      idx: int option;
       event: string list;
       cond: TYPES.expr;
       target: string list;

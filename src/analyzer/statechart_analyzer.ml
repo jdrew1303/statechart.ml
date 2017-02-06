@@ -16,72 +16,77 @@ let map_id map id idx =
   | Some id -> StateIDMap.add id idx map
   | _ -> map
 
-let rec assign_idx_rec node idx map ancestors =
+let rec assign_idx_rec node idx tsn map ancestors =
   match node with
   | State s ->
     let map = map_id map s.State.id idx in
-    let children, count, map, descendants =
-      assign_children s.State.children (idx + 1) map ancestors in
+    let children, count, tsn, map, descendants =
+      assign_children s.State.children (idx + 1) tsn map ancestors in
     State {s with
       State.idx=Some idx;
       children;
       ancestors;
       descendants
-    }, count, map, idx :: descendants
+    }, count, tsn, map, idx :: descendants
   | Parallel s ->
     let map = map_id map s.Parallel.id idx in
-    let children, count, map, descendants =
-      assign_children s.Parallel.children (idx + 1) map ancestors in
+    let children, count, tsn, map, descendants =
+      assign_children s.Parallel.children (idx + 1) tsn map ancestors in
     Parallel {s with
       Parallel.idx=Some idx;
       children;
       ancestors;
       descendants
-    }, count, map, idx :: descendants
+    }, count, tsn, map, idx :: descendants
+  | Transition s ->
+    Transition {s with
+      Transition.idx=Some tsn;
+      ancestors;
+    }, idx, (tsn + 1), map, []
   | Initial s ->
-    let children, count, map, descendants =
-      assign_children s.Initial.children (idx + 1) map ancestors in
+    let children, count, tsn, map, descendants =
+      assign_children s.Initial.children (idx + 1) tsn map ancestors in
     Initial {s with
       Initial.idx=Some idx;
       children;
       ancestors;
       descendants
-    }, count, map, idx :: descendants
+    }, count, tsn, map, idx :: descendants
   | Final s ->
     let map = map_id map s.Final.id idx in
-    let children, count, map, descendants =
-      assign_children s.Final.children (idx + 1) map ancestors in
+    let children, count, tsn, map, descendants =
+      assign_children s.Final.children (idx + 1) tsn map ancestors in
     Final {s with
       Final.idx=Some idx;
       children;
       ancestors;
       descendants
-    }, count, map, idx :: descendants
+    }, count, tsn, map, idx :: descendants
   | History s ->
     let map = map_id map s.History.id idx in
-    let children, count, map, descendants =
-      assign_children s.History.children (idx + 1) map ancestors in
+    let children, count, tsn, map, descendants =
+      assign_children s.History.children (idx + 1) tsn map ancestors in
     History {s with
       History.idx=Some idx;
       children;
       ancestors;
       descendants
-    }, count, map, idx :: descendants
-  | _ -> node, idx, map, []
+    }, count, tsn, map, idx :: descendants
+  | _ -> node, idx, tsn, map, []
 
-and assign_children children parent map ancs =
+and assign_children children parent tsn map ancs =
   let ancs = parent :: ancs in
-  let c, idx, map, desc = List.fold_left (fun acc child ->
-    let c, idx, map, desc = acc in
-    let child, idx, map, c_desc = assign_idx_rec child idx map ancs in
+  let c, idx, tsn, map, desc = List.fold_left (fun acc child ->
+    let c, idx, tsn, map, desc = acc in
+    let child, idx, tsn, map, c_desc = assign_idx_rec child idx tsn map ancs in
     let c = child :: c in
-    c, idx, map, (List.append desc c_desc)
-  ) ([], parent, map, []) children in
-  (List.rev c), idx, map, desc
+    c, idx, tsn, map, (List.append desc c_desc)
+  ) ([], parent, tsn, map, []) children in
+  (List.rev c), idx, tsn, map, desc
 
 let assign_idx doc =
   let map = StateIDMap.empty in
-  let children, count, map, _desc = assign_children doc.Document.children 0 map [] in
+  let children, count, _tsn, map, _desc = assign_children doc.Document.children 0 0 map [] in
   {doc with Document.children; state_map=Some map; state_count=count}
 
 let select_datamodel doc datamodels =
@@ -196,9 +201,9 @@ let rec parse_child dm errors child =
     let t = parse_expr dm errors line s.Send.t in
     let id = parse_expr dm errors line s.Send.id in
     let delay = parse_expr dm errors line s.Send.delay in
-    (* TODO namelist *)
+    let namelist = List.map (parse_expr dm errors line) s.Send.namelist in
     let children = parse_children dm errors s.Send.children in
-    Send {s with Send.event; target; t; id; delay; children}
+    Send {s with Send.event; target; t; id; delay; namelist; children}
   | Cancel s ->
     let line = get_option s.Cancel.line 1 in
     let sendid = parse_expr dm errors line s.Cancel.sendid in
@@ -208,9 +213,9 @@ let rec parse_child dm errors child =
     let t = parse_expr dm errors line s.Invoke.t in
     let src = parse_expr dm errors line s.Invoke.src in
     let id = parse_expr dm errors line s.Invoke.id in
-    (* TODO namelist *)
+    let namelist = List.map (parse_expr dm errors line) s.Invoke.namelist in
     let children = parse_children dm errors s.Invoke.children in
-    Invoke {s with Invoke.t; src; id; children}
+    Invoke {s with Invoke.t; src; id; namelist; children}
   | Finalize s ->
     let children = parse_children dm errors s.Finalize.children in
     Finalize {s with Finalize.children}

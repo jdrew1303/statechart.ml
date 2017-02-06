@@ -133,9 +133,9 @@ and State:
 and Transition:
   sig
     type t = {
-      scope: TYPES.ref;
+      idx: int;
       depth: TYPES.uint;
-      priority: TYPES.uint;
+      scope: TYPES.ref;
       source: TYPES.ref option;
       targets: TYPES.ref list;
       events: string list;

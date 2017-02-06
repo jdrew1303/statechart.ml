@@ -2,8 +2,8 @@
   "name" : "statechart",
   "sources" : [
     {"dir": "src/analyzer", "type": "lib"},
+    {"dir": "src/datamodel", "type": "lib"},
     {"dir": "src/engine_js", "type": "lib"},
-    {"dir": "src/format", "type": "lib"},
     {"dir": "src/lib", "type": "lib"},
     {"dir": "src/interpreter", "type": "lib"},
   ]

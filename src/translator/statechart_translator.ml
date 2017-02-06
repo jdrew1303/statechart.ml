@@ -180,6 +180,7 @@ and translate_history states idmap state =
   idx
 
 and translate_transition states idmap transition =
+  let idx = unwrap transition.Src.Transition.idx in
   let ancestors = transition.Src.Transition.ancestors in
   let parent = get_parent ancestors in
   let condition = match transition.Src.Transition.cond with
@@ -187,11 +188,10 @@ and translate_transition states idmap transition =
   | cond -> Some (unwrap_expr cond) in
   let children = translate_executables transition.Src.Transition.children in
   {
+    Tgt.Transition.idx=idx;
     (* TODO *)
-    Tgt.Transition.scope=0;
+    scope=0;
     depth=List.length ancestors;
-    (* TODO *)
-    priority=0;
     source=parent;
     targets=resolve_list transition.Src.Transition.target idmap;
     events=transition.Src.Transition.event;

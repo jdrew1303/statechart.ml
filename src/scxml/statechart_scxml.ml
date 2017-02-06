@@ -117,7 +117,8 @@ let parse_transition_type t =
 
 let parse_transition line props children =
   Transition {
-    Transition.event=get_prop props "event" |> parse_string_list;
+    Transition.idx=None;
+    event=get_prop props "event" |> parse_string_list;
     cond=get_prop_expr props "cond";
     target=get_prop props "target" |> parse_string_list;
     t=get_prop props "type" |> parse_transition_type;
