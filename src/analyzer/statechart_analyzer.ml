@@ -19,45 +19,69 @@ let map_id map id idx =
 let rec assign_idx_rec node idx map ancestors =
   match node with
   | State s ->
-    let s = {s with State.idx=Some idx; ancestors} in
     let map = map_id map s.State.id idx in
-    let children, idx, map = assign_children s.State.children idx map ancestors in
-    State {s with State.children}, idx, map
+    let children, count, map, descendants =
+      assign_children s.State.children (idx + 1) map ancestors in
+    State {s with
+      State.idx=Some idx;
+      children;
+      ancestors;
+      descendants
+    }, count, map, idx :: descendants
   | Parallel s ->
-    let s = {s with Parallel.idx=Some idx; ancestors} in
     let map = map_id map s.Parallel.id idx in
-    let children, idx, map = assign_children s.Parallel.children idx map ancestors in
-    Parallel {s with Parallel.children}, idx, map
+    let children, count, map, descendants =
+      assign_children s.Parallel.children (idx + 1) map ancestors in
+    Parallel {s with
+      Parallel.idx=Some idx;
+      children;
+      ancestors;
+      descendants
+    }, count, map, idx :: descendants
   | Initial s ->
-    let s = {s with Initial.idx=Some idx; ancestors} in
-    let children, idx, map = assign_children s.Initial.children idx map ancestors in
-    Initial {s with Initial.children}, idx, map
+    let children, count, map, descendants =
+      assign_children s.Initial.children (idx + 1) map ancestors in
+    Initial {s with
+      Initial.idx=Some idx;
+      children;
+      ancestors;
+      descendants
+    }, count, map, idx :: descendants
   | Final s ->
-    let s = {s with Final.idx=Some idx; ancestors} in
     let map = map_id map s.Final.id idx in
-    let children, idx, map = assign_children s.Final.children idx map ancestors in
-    Final {s with Final.children}, idx, map
+    let children, count, map, descendants =
+      assign_children s.Final.children (idx + 1) map ancestors in
+    Final {s with
+      Final.idx=Some idx;
+      children;
+      ancestors;
+      descendants
+    }, count, map, idx :: descendants
   | History s ->
-    let s = {s with History.idx=Some idx; ancestors} in
     let map = map_id map s.History.id idx in
-    let children, idx, map = assign_children s.History.children idx map ancestors in
-    History {s with History.children}, idx, map
-  | _ -> node, idx, map
+    let children, count, map, descendants =
+      assign_children s.History.children (idx + 1) map ancestors in
+    History {s with
+      History.idx=Some idx;
+      children;
+      ancestors;
+      descendants
+    }, count, map, idx :: descendants
+  | _ -> node, idx, map, []
 
 and assign_children children parent map ancs =
   let ancs = parent :: ancs in
-  let idx = parent + 1 in
-  let c, idx, map = List.fold_left (fun acc child ->
-    let c, idx, map = acc in
-    let child, idx, map = assign_idx_rec child idx map ancs in
+  let c, idx, map, desc = List.fold_left (fun acc child ->
+    let c, idx, map, desc = acc in
+    let child, idx, map, c_desc = assign_idx_rec child idx map ancs in
     let c = child :: c in
-    c, (idx + 1), map
-  ) ([], idx, map) children in
-  (List.rev c), idx, map
+    c, idx, map, (List.append desc c_desc)
+  ) ([], parent, map, []) children in
+  (List.rev c), idx, map, desc
 
 let assign_idx doc =
   let map = StateIDMap.empty in
-  let children, count, map = assign_children doc.Document.children (-1) map [] in
+  let children, count, map, _desc = assign_children doc.Document.children 0 map [] in
   {doc with Document.children; state_map=Some map; state_count=count}
 
 let select_datamodel doc datamodels =
