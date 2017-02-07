@@ -6,6 +6,9 @@ module type Interpreter = sig
   type document
   type executable
   type event
+
+  val load : Statechart.document -> document
+
   val start : datamodel -> document -> engine
   val handle_internal_event : engine -> document -> event -> engine
   val synchronize : engine -> document -> engine

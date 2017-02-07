@@ -11,6 +11,9 @@ module type Interpreter = sig
   type document
   type executable
   type event
+
+  val load : Statechart.document -> document
+
   val start : datamodel -> document -> engine
   val handle_internal_event : engine -> document -> event -> engine
   val synchronize : engine -> document -> engine
@@ -35,9 +38,8 @@ module Make(Eng : Engine) = struct
   type datamodel = Eng.datamodel
   type configuration = IntSet.t
   type executable = Eng.executable
-  type event_pattern = Eng.event_pattern
-  type event = string
   type query = datamodel -> bool
+  type event = string
 
   module rec TYPES:
     sig
@@ -99,10 +101,9 @@ module Make(Eng : Engine) = struct
       type t = {
         idx: int;
         depth: int;
-        order: int;
         id: string option;
         t: TYPES.state_type;
-        initial_state: int option;
+        initial: int array;
         transitions: TYPES.transition array;
         invocations: TYPES.invoke array;
         on_enter: executable array;
@@ -119,12 +120,12 @@ module Make(Eng : Engine) = struct
   and Transition:
     sig
       type t = {
-        domain: int;
+        idx: int;
         depth: int;
-        order: int;
-        source: int;
+        scope: int;
+        source: int option;
         targets: int array;
-        events: event_pattern option;
+        events: (string -> bool) option;
         condition: query option;
         t: TYPES.transition_type;
         on_transition: executable array;
@@ -161,7 +162,7 @@ module Make(Eng : Engine) = struct
 
     let compare s1 s2 =
       match s1.State.depth, s2.State.depth with
-      | d1, d2 when d1 = d2 -> Pervasives.compare s1.State.order s2.State.order
+      | d1, d2 when d1 = d2 -> Pervasives.compare s1.State.idx s2.State.idx
       | d1, d2 when d1 >= d2 -> 1
       | _ -> -1
   end)
@@ -171,7 +172,7 @@ module Make(Eng : Engine) = struct
 
     let compare s1 s2 =
       match s1.State.depth, s2.State.depth with
-      | d1, d2 when d1 = d2 -> Pervasives.compare s1.State.order s2.State.order
+      | d1, d2 when d1 = d2 -> Pervasives.compare s1.State.idx s2.State.idx
       | d1, d2 when d2 >= d1 -> -1
       | _ -> 1
   end)
@@ -181,7 +182,7 @@ module Make(Eng : Engine) = struct
 
     let compare s1 s2 =
       match s1.Transition.depth, s2.Transition.depth with
-      | d1, d2 when d1 = d2 -> Pervasives.compare s1.Transition.order s2.Transition.order
+      | d1, d2 when d1 = d2 -> Pervasives.compare s1.Transition.idx s2.Transition.idx
       | d1, d2 when d1 >= d2 -> 1
       | _ -> -1
   end)
@@ -310,9 +311,9 @@ module Make(Eng : Engine) = struct
     query_transitions (fun transition ->
       match transition with
       | {Transition.events=Some events; condition=Some cond} ->
-        (Eng.match_event events event) && (cond datamodel)
+        (events event) && (cond datamodel)
       | {Transition.events=Some events; condition=None} ->
-        Eng.match_event events event
+        events event
       | _ -> false
     ) doc conf
 
@@ -336,11 +337,11 @@ module Make(Eng : Engine) = struct
     TransitionSet.fold (fun transition acc ->
       match transition with
       | {Transition.targets=[||]} -> acc
-      | {Transition.targets=targets; domain=domain} ->
+      | {Transition.targets=targets; scope=scope} ->
         Array.fold_left (fun acc target ->
           IntSet.fold (fun idx acc ->
             let state = resolve doc idx in
-            if IntSet.mem domain state.State.descendants
+            if IntSet.mem scope state.State.descendants
             then ExitStates.add state acc
             else acc
           ) conf acc
@@ -556,7 +557,7 @@ module Make(Eng : Engine) = struct
       Array.fold_left (fun acc idx ->
         let state = resolve doc idx in
         let acc = add_descendant_states_to_enter engine doc acc state in
-        let ancestor = resolve doc transition.Transition.domain in
+        let ancestor = resolve doc transition.Transition.scope in
         let effective_target_states = get_effective_target_states engine doc transition in
         EnterStates.fold (fun state acc ->
           add_ancestor_states_to_enter engine doc acc state ancestor
@@ -711,7 +712,83 @@ module Make(Eng : Engine) = struct
 
   (* TODO *)
 
+  let load_list l =
+    Array.of_list (List.map Eng.load_executable l)
+
+  let load_option l =
+    match l with
+    | None -> None
+    | Some expr -> Some (Eng.load_executable expr)
+
+  let load_transition transition =
+    {
+      Transition.idx=transition.Statechart.Transition.idx;
+      depth=transition.Statechart.Transition.depth;
+      scope=transition.Statechart.Transition.scope;
+      source=transition.Statechart.Transition.source;
+      targets=Array.of_list transition.Statechart.Transition.targets;
+      events=(match transition.Statechart.Transition.events with
+      | [] -> None
+      | events -> Some (Eng.load_event_match events));
+      condition=(match transition.Statechart.Transition.condition with
+      | None -> None
+      | Some c -> Some (Eng.load_query c));
+      t=transition.Statechart.Transition.t;
+      on_transition=load_list transition.Statechart.Transition.on_transition;
+    }
+
+  let load_param p =
+    {
+      Param.id=p.Statechart.Param.id;
+      expression=load_option p.Statechart.Param.expression;
+    }
+
+  let load_invoke inv =
+    {
+      Invoke.t=load_option inv.Statechart.Invoke.t;
+      src=load_option inv.Statechart.Invoke.src;
+      id=load_option inv.Statechart.Invoke.id;
+      namelist=load_list inv.Statechart.Invoke.namelist;
+      autoforward=inv.Statechart.Invoke.autoforward;
+      params=Array.of_list
+        (List.map load_param inv.Statechart.Invoke.params);
+      (* TODO *)
+      content=None;
+      on_exit=load_list inv.Statechart.Invoke.on_exit;
+    }
+
+  let load_state state =
+    {
+      State.idx=state.Statechart.State.idx;
+      depth=state.Statechart.State.depth;
+      id=state.Statechart.State.id;
+      t=state.Statechart.State.t;
+      initial=Array.of_list state.Statechart.State.initial;
+      transitions=Array.of_list
+        (List.map load_transition state.Statechart.State.transitions);
+      (* TODO *)
+      invocations=[||];
+      on_enter=load_list state.Statechart.State.on_enter;
+      on_exit=load_list state.Statechart.State.on_exit;
+      children=IntSet.of_list state.Statechart.State.children;
+      parent=state.Statechart.State.parent;
+      ancestors=IntSet.of_list state.Statechart.State.ancestors;
+      descendants=IntSet.of_list state.Statechart.State.descendants;
+      (* TODO *)
+      history=[||];
+      history_type=state.Statechart.State.history_type;
+      (* TODO *)
+      donedata=None;
+    }
+
   (* Public interface *)
+
+  let load src =
+    {
+      Document.name=src.Statechart.Document.name;
+      initial_transitions=List.map load_transition src.Statechart.Document.initial_transitions;
+      states=Array.map load_state src.Statechart.Document.states;
+    }
 
   let start datamodel doc =
     let engine = {

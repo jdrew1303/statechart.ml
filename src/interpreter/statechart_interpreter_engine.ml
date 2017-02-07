@@ -1,6 +1,8 @@
 module type Engine = sig
   type datamodel
   type executable
-  type event_pattern
-  val match_event : event_pattern -> string -> bool
+
+  val load_executable : Statechart.expression -> executable
+  val load_query : Statechart.expression -> (datamodel -> bool)
+  val load_event_match : string list -> (string -> bool)
 end

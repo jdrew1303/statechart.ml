@@ -47,7 +47,7 @@ module rec TYPES:
       ]
     type state_type =
       [
-        | `composite
+        | `compound
         | `basic
         | `parallel
         | `history
@@ -93,7 +93,7 @@ and Expression:
 and Invoke:
   sig
     type t = {
-      type_: TYPES.expression option;
+      t: TYPES.expression option;
       src: TYPES.expression option;
       id: TYPES.expression option;
       namelist: TYPES.expression list;

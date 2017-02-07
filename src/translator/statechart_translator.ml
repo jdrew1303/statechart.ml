@@ -68,7 +68,7 @@ let rec translate_state states idmap state =
     id=state.Src.State.id;
     t=(match children with
     | [] -> `basic
-    | _ -> `composite);
+    | _ -> `compound);
     initial=resolve_list state.Src.State.initial idmap;
     transitions=trans;
     invocations=invs;
@@ -189,9 +189,9 @@ and translate_transition states idmap transition =
   let children = translate_executables transition.Src.Transition.children in
   {
     Tgt.Transition.idx=idx;
+    depth=List.length ancestors;
     (* TODO *)
     scope=0;
-    depth=List.length ancestors;
     source=parent;
     targets=resolve_list transition.Src.Transition.target idmap;
     events=transition.Src.Transition.event;
