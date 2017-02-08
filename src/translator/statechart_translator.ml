@@ -53,7 +53,7 @@ let empty_state =
     parent=None;
     ancestors=[];
     descendants=[];
-    history=None;
+    history=[];
     history_type=None;
   }
 
@@ -78,7 +78,7 @@ let rec translate_state states idmap state =
     parent=get_parent ancestors;
     ancestors=ancestors;
     descendants=state.Src.State.descendants;
-    history=None;
+    history=[];
     history_type=None;
   };
   idx
@@ -102,7 +102,7 @@ and translate_parallel states idmap state =
     parent=get_parent ancestors;
     ancestors=ancestors;
     descendants=state.Src.Parallel.descendants;
-    history=None;
+    history=[];
     history_type=None;
   };
   idx
@@ -126,7 +126,7 @@ and translate_initial states idmap state =
     parent=get_parent ancestors;
     ancestors=ancestors;
     descendants=state.Src.Initial.descendants;
-    history=None;
+    history=[];
     history_type=None;
   };
   idx
@@ -150,7 +150,7 @@ and translate_final states idmap state =
     parent=get_parent ancestors;
     ancestors=ancestors;
     descendants=state.Src.Final.descendants;
-    history=None;
+    history=[];
     history_type=None;
   };
   idx
@@ -174,7 +174,7 @@ and translate_history states idmap state =
     parent=get_parent ancestors;
     ancestors=ancestors;
     descendants=state.Src.History.descendants;
-    history=None; (* TODO *)
+    history=[]; (* TODO *)
     history_type=Some state.Src.History.t;
   };
   idx
@@ -324,5 +324,5 @@ let translate document =
   {
     Tgt.Document.name=document.Src.Document.name;
     initial_transitions=[];
-    states=states;
+    states=Array.to_list states;
   }

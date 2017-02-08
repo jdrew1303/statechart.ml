@@ -82,7 +82,6 @@ module Make(Eng : Engine) = struct
         t: executable option;
         src: executable option;
         id: executable option;
-        namelist: executable array;
         autoforward: bool;
         params: TYPES.param array;
         content: executable option;
@@ -748,7 +747,6 @@ module Make(Eng : Engine) = struct
       Invoke.t=load_option inv.Statechart.Invoke.t;
       src=load_option inv.Statechart.Invoke.src;
       id=load_option inv.Statechart.Invoke.id;
-      namelist=load_list inv.Statechart.Invoke.namelist;
       autoforward=inv.Statechart.Invoke.autoforward;
       params=Array.of_list
         (List.map load_param inv.Statechart.Invoke.params);
@@ -766,8 +764,8 @@ module Make(Eng : Engine) = struct
       initial=Array.of_list state.Statechart.State.initial;
       transitions=Array.of_list
         (List.map load_transition state.Statechart.State.transitions);
-      (* TODO *)
-      invocations=[||];
+      invocations=Array.of_list
+        (List.map load_invoke state.Statechart.State.invocations);
       on_enter=load_list state.Statechart.State.on_enter;
       on_exit=load_list state.Statechart.State.on_exit;
       children=IntSet.of_list state.Statechart.State.children;
@@ -787,7 +785,8 @@ module Make(Eng : Engine) = struct
     {
       Document.name=src.Statechart.Document.name;
       initial_transitions=List.map load_transition src.Statechart.Document.initial_transitions;
-      states=Array.map load_state src.Statechart.Document.states;
+      states=Array.of_list
+        (List.map load_state src.Statechart.Document.states);
     }
 
   let start datamodel doc =

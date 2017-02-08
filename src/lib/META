@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 4acd970c9bd7b946777b731188030042)
+# DO NOT EDIT (digest: dd9c8e39ef61d620b9274f5deb38637e)
 version = "dev"
 description = "Statechart implementation for OCaml"
 archive(byte) = "statechart.cma"
@@ -38,6 +38,17 @@ package "interpreter" (
  archive(native) = "statechart_interpreter.cmxa"
  archive(native, plugin) = "statechart_interpreter.cmxs"
  exists_if = "statechart_interpreter.cma"
+)
+
+package "format" (
+ version = "dev"
+ description = "Statechart implementation for OCaml"
+ requires = "statechart"
+ archive(byte) = "statechart_format.cma"
+ archive(byte, plugin) = "statechart_format.cma"
+ archive(native) = "statechart_format.cmxa"
+ archive(native, plugin) = "statechart_format.cmxs"
+ exists_if = "statechart_format.cma"
 )
 
 package "datamodel" (

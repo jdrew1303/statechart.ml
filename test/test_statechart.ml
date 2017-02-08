@@ -27,6 +27,11 @@ let w3_test path description () =
   | Some document -> (
     let document = Statechart_analyzer.analyze document datamodels in
     let document = Statechart_translator.translate document in
+    let iolist = Statechart_format.gen_document document in
+    let buffer = Statechart_format_runtime.to_string iolist in
+    let out = open_out (path ^ ".bin") in
+    output_bytes out buffer;
+    close_out out;
     ()
   )
 

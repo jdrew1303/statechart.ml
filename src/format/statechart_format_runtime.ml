@@ -34,7 +34,7 @@ let string_of_loc pos =
   string_of_int pos
 
 
-let strerr loc s = 
+let strerr loc s =
   string_of_loc loc ^ ": " ^ s
 
 
@@ -124,7 +124,7 @@ module IBuf =
     let of_string x start_pos =
       String
         { s = x; len = String.length x;
-          start_pos = start_pos; pos = 0; 
+          start_pos = start_pos; pos = 0;
         }
 
 
@@ -214,7 +214,7 @@ module IBuf =
   end
 
 
-type t = 
+type t =
   | Varint of int
   | Varint64 of int64 (* used if int width is not enough *)
   | Int32 of int32
@@ -602,10 +602,10 @@ let float_of_int32 x =
 let float_of_int64 x =
   Int64.float_of_bits x (* XXX *)
 
-let float_of_fixed64 buf = 
+let float_of_fixed64 buf =
   float_of_int64 (expect_int64 buf)
 
-let float_of_fixed32 buf = 
+let float_of_fixed32 buf =
   float_of_int32 (expect_int32 buf)
 
 
@@ -743,7 +743,7 @@ let parse_record obj =
     | obj -> error obj "block expected"
 
 
-let parse_variant obj = 
+let parse_variant obj =
   match parse_record obj with
     | [x] -> x
     | [] -> error obj "empty variant"
@@ -1565,4 +1565,3 @@ let gen_block iodata =
 (* XXX, TODO: return Some or None on End_of_buffer *)
 let parse_block buf =
   Top_block (parse_block buf)
-

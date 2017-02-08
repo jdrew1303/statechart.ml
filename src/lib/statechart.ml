@@ -76,7 +76,7 @@ and Document:
     type t = {
       name: string option;
       initial_transitions: TYPES.transition list;
-      states: TYPES.state array;
+      states: TYPES.state list;
     }
   end = Document
 and Expression:
@@ -96,7 +96,6 @@ and Invoke:
       t: TYPES.expression option;
       src: TYPES.expression option;
       id: TYPES.expression option;
-      namelist: TYPES.expression list;
       autoforward: bool;
       params: TYPES.param list;
       content: TYPES.content option;
@@ -126,7 +125,7 @@ and State:
       parent: TYPES.ref option;
       ancestors: TYPES.ref list;
       descendants: TYPES.ref list;
-      history: TYPES.ref option;
+      history: TYPES.ref list;
       history_type: TYPES.history_type option;
     }
   end = State

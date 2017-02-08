@@ -44,13 +44,13 @@ Library statechart_datamodel_ecmascript
                  flow_parser (>= 0.38.0)
   Modules:       Statechart_datamodel_ecmascript
 
-#Library statechart_format
-#  Path:          src/format
-#  Findlibname:   format
-#  FindlibParent: statechart
-#  BuildDepends:  statechart
-#  Modules:       Statechart_format,
-#                 Statechart_format_runtime
+Library statechart_format
+  Path:          src/format
+  Findlibname:   format
+  FindlibParent: statechart
+  BuildDepends:  statechart
+  Modules:       Statechart_format,
+                 Statechart_format_runtime
 
 Library statechart_interpreter
   Path:          src/interpreter
@@ -74,7 +74,6 @@ Library statechart_scxml
   FindlibParent: statechart
   BuildDepends:  statechart,
                  statechart.analyzer,
-#                 statechart.format,
                  humane_re (>= 0.1.0),
                  markup (>= 0.7.0)
   Modules:       Statechart_scxml
@@ -98,7 +97,7 @@ Document api
   Install:              true
   XOCamlBuildPath:      src
   XOCamlBuildLibraries: statechart,
-#                        statechart.format,
+                        statechart.format,
                         statechart.scxml
 
 Executable test_statechart
@@ -111,6 +110,7 @@ Executable test_statechart
                     statechart.analyzer,
                     statechart.datamodel,
                     statechart.datamodel.ecmascript,
+                    statechart.format,
                     statechart.interpreter,
                     statechart.translator,
                     statechart.scxml,

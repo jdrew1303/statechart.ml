@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 912bbc99f9362786dd9a7e4098b151c9)
+# DO NOT EDIT (digest: dc7310ece89a2fcf854f3cea8796a36e)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -28,6 +28,9 @@ true: annot, bin_annot
 <src/datamodel/ecmascript/*.ml{,i,y}>: package(flow_parser)
 <src/datamodel/ecmascript/*.ml{,i,y}>: use_statechart
 <src/datamodel/ecmascript/*.ml{,i,y}>: use_statechart_datamodel
+# Library statechart_format
+"src/format/statechart_format.cmxs": use_statechart_format
+<src/format/*.ml{,i,y}>: use_statechart
 # Library statechart_interpreter
 "src/interpreter/statechart_interpreter.cmxs": use_statechart_interpreter
 <src/interpreter/*.ml{,i,y}>: use_statechart
@@ -76,6 +79,7 @@ true: annot, bin_annot
 <test/test_statechart.{native,byte}>: use_statechart_analyzer
 <test/test_statechart.{native,byte}>: use_statechart_datamodel
 <test/test_statechart.{native,byte}>: use_statechart_datamodel_ecmascript
+<test/test_statechart.{native,byte}>: use_statechart_format
 <test/test_statechart.{native,byte}>: use_statechart_interpreter
 <test/test_statechart.{native,byte}>: use_statechart_scxml
 <test/test_statechart.{native,byte}>: use_statechart_translator
@@ -88,6 +92,7 @@ true: annot, bin_annot
 <test/*.ml{,i,y}>: use_statechart_analyzer
 <test/*.ml{,i,y}>: use_statechart_datamodel
 <test/*.ml{,i,y}>: use_statechart_datamodel_ecmascript
+<test/*.ml{,i,y}>: use_statechart_format
 <test/*.ml{,i,y}>: use_statechart_interpreter
 <test/*.ml{,i,y}>: use_statechart_scxml
 <test/*.ml{,i,y}>: use_statechart_translator
