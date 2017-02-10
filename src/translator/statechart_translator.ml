@@ -1,6 +1,6 @@
 module Src = Statechart_analyzer_types
 module Tgt = Statechart
-
+(*
 type child_type = State of int
                 | OnEntry of Tgt.expression list
                 | OnExit of Tgt.expression list
@@ -41,20 +41,15 @@ let resolve_list l idmap =
 let empty_state =
   {
     Tgt.State.idx=0;
-    depth=0;
     id=None;
-    t=`basic;
-    initial=[];
+    t=`atomic;
     transitions=[];
     invocations=[];
     on_enter=[];
     on_exit=[];
     children=[];
-    parent=None;
+    parent=0;
     ancestors=[];
-    descendants=[];
-    history=[];
-    history_type=None;
   }
 
 let rec translate_state states idmap state =
@@ -325,4 +320,11 @@ let translate document =
     Tgt.Document.name=document.Src.Document.name;
     initial_transitions=[];
     states=Array.to_list states;
+  } *)
+
+let translate document =
+  {
+    Tgt.Document.name=None;
+    transitions=[];
+    states=[];
   }

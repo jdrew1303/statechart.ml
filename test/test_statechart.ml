@@ -28,9 +28,8 @@ let w3_test path description () =
     let document = Statechart_analyzer.analyze document datamodels in
     let document = Statechart_translator.translate document in
     let iolist = Statechart_format.gen_document document in
-    let buffer = Statechart_format_runtime.to_string iolist in
-    let out = open_out (path ^ ".bin") in
-    output_bytes out buffer;
+    let out = open_out (path ^ ".protobin") in
+    Statechart_format_runtime.to_channel out iolist;
     close_out out;
     ()
   )

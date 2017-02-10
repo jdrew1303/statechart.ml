@@ -48,21 +48,20 @@ module rec TYPES:
     type state_type =
       [
         | `compound
-        | `basic
+        | `atomic
         | `parallel
-        | `history
+        | `history_shallow
+        | `history_deep
         | `initial
         | `final
       ]
-    type history_type =
-      [
-        | `shallow
-        | `deep
-      ]
     type transition_type =
       [
-        | `external_
+        | `targetless
         | `internal
+        | `spontaneous
+        | `history
+        | `initial
       ]
     type document = Document.t
     type expression = Expression.t
@@ -75,8 +74,8 @@ and Document:
   sig
     type t = {
       name: string option;
-      initial_transitions: TYPES.transition list;
       states: TYPES.state list;
+      transitions: TYPES.transition list;
     }
   end = Document
 and Expression:
@@ -112,35 +111,33 @@ and Param:
 and State:
   sig
     type t = {
-      idx: TYPES.ref;
-      depth: TYPES.uint;
-      id: string option;
       t: TYPES.state_type;
-      initial: TYPES.ref list;
-      transitions: TYPES.transition list;
-      invocations: TYPES.invoke list;
+      idx: TYPES.ref;
+      id: string option;
       on_enter: TYPES.expression list;
       on_exit: TYPES.expression list;
+      invocations: TYPES.invoke list;
+      data: TYPES.expression list;
+      donedata: TYPES.expression option;
+      parent: TYPES.ref;
       children: TYPES.ref list;
-      parent: TYPES.ref option;
       ancestors: TYPES.ref list;
-      descendants: TYPES.ref list;
-      history: TYPES.ref list;
-      history_type: TYPES.history_type option;
+      completion: TYPES.ref list;
+      transitions: TYPES.ref list;
     }
   end = State
 and Transition:
   sig
     type t = {
+      t: TYPES.transition_type;
       idx: int;
-      depth: TYPES.uint;
-      scope: TYPES.ref;
-      source: TYPES.ref option;
-      targets: TYPES.ref list;
+      source: TYPES.ref;
       events: string list;
       condition: TYPES.expression option;
-      t: TYPES.transition_type;
       on_transition: TYPES.expression list;
+      targets: TYPES.ref list;
+      conflicts: TYPES.ref list;
+      exits: TYPES.ref list;
     }
   end = Transition
 

@@ -1,3 +1,29 @@
+(*
+STEPS
+
+States:
+* get the binding - default to early
+* if the binding is early move all of the data elements to the first state
+* assign an index to each state
+* promote onentry, onexit, and invoke to state
+* promote script tag to onentry
+* promote donedata to state
+* if the binding is late promote datamodel to state
+* assign the state type:
+  INITIAL | FINAL | HISTORY_DEEP | HISTORY_SHALLOW | ATOMIC | PARALLEL | COMPOUND
+* mark the state as having a history child or not
+* establish states ancestors
+
+Transitions:
+* compute the exit set
+* compute the conflict set
+* compute the transition target set
+* compute the transition source
+* compute the transition type:
+  TARGETLESS | INTERNAL | SPONTANEOUS | HISTORY | INITIAL
+* promote executable content to on_transition
+*)
+
 open Statechart_analyzer_types
 open Statechart_datamodel
 module SC = Statechart

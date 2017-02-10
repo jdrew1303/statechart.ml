@@ -35,13 +35,13 @@ and parse_content x =
 and parse_document x =
   let x = Piqirun.parse_record x in
   let _name, x = Piqirun.parse_optional_field 1 parse_string x in
-  let _initial_transitions, x = Piqirun.parse_repeated_field 2 parse_transition x in
-  let _states, x = Piqirun.parse_repeated_field 3 parse_state x in
+  let _states, x = Piqirun.parse_repeated_field 2 parse_state x in
+  let _transitions, x = Piqirun.parse_repeated_field 3 parse_transition x in
   Piqirun.check_unparsed_fields x;
   {
     Document.name = _name;
-    Document.initial_transitions = _initial_transitions;
     Document.states = _states;
+    Document.transitions = _transitions;
   }
 
 and parse_expression_type x =
@@ -138,105 +138,98 @@ and parse_param x =
 and parse_ref x = parse_uint x
 and packed_parse_ref x = packed_parse_uint x
 
-and parse_state x =
-  let x = Piqirun.parse_record x in
-  let _idx, x = Piqirun.parse_required_field 1 parse_uint x in
-  let _depth, x = Piqirun.parse_required_field 2 parse_uint x in
-  let _id, x = Piqirun.parse_optional_field 3 parse_string x in
-  let _t, x = Piqirun.parse_required_field 4 parse_state_type x ~default:"\b\001" in
-  let _initial, x = Piqirun.parse_repeated_field 5 parse_ref x in
-  let _transitions, x = Piqirun.parse_repeated_field 6 parse_transition x in
-  let _invocations, x = Piqirun.parse_repeated_field 7 parse_invoke x in
-  let _on_enter, x = Piqirun.parse_repeated_field 8 parse_expression x in
-  let _on_exit, x = Piqirun.parse_repeated_field 9 parse_expression x in
-  let _children, x = Piqirun.parse_repeated_field 10 parse_ref x in
-  let _parent, x = Piqirun.parse_optional_field 11 parse_ref x in
-  let _ancestors, x = Piqirun.parse_repeated_field 12 parse_ref x in
-  let _descendants, x = Piqirun.parse_repeated_field 13 parse_ref x in
-  let _history, x = Piqirun.parse_repeated_field 14 parse_ref x in
-  let _history_type, x = Piqirun.parse_optional_field 15 parse_history_type x in
-  Piqirun.check_unparsed_fields x;
-  {
-    State.idx = _idx;
-    State.depth = _depth;
-    State.id = _id;
-    State.t = _t;
-    State.initial = _initial;
-    State.transitions = _transitions;
-    State.invocations = _invocations;
-    State.on_enter = _on_enter;
-    State.on_exit = _on_exit;
-    State.children = _children;
-    State.parent = _parent;
-    State.ancestors = _ancestors;
-    State.descendants = _descendants;
-    State.history = _history;
-    State.history_type = _history_type;
-  }
-
 and parse_state_type x =
   match Piqirun.int32_of_signed_varint x with
     | 1l -> `compound
-    | 2l -> `basic
+    | 2l -> `atomic
     | 3l -> `parallel
-    | 4l -> `history
-    | 5l -> `initial
-    | 6l -> `final
+    | 4l -> `history_shallow
+    | 5l -> `history_deep
+    | 6l -> `initial
+    | 7l -> `final
     | x -> Piqirun.error_enum_const x
 and packed_parse_state_type x =
   match Piqirun.int32_of_packed_signed_varint x with
     | 1l -> `compound
-    | 2l -> `basic
+    | 2l -> `atomic
     | 3l -> `parallel
-    | 4l -> `history
-    | 5l -> `initial
-    | 6l -> `final
+    | 4l -> `history_shallow
+    | 5l -> `history_deep
+    | 6l -> `initial
+    | 7l -> `final
     | x -> Piqirun.error_enum_const x
 
-and parse_history_type x =
-  match Piqirun.int32_of_signed_varint x with
-    | 1l -> `shallow
-    | 2l -> `deep
-    | x -> Piqirun.error_enum_const x
-and packed_parse_history_type x =
-  match Piqirun.int32_of_packed_signed_varint x with
-    | 1l -> `shallow
-    | 2l -> `deep
-    | x -> Piqirun.error_enum_const x
+and parse_state x =
+  let x = Piqirun.parse_record x in
+  let _t, x = Piqirun.parse_required_field 1 parse_state_type x ~default:"\b\001" in
+  let _idx, x = Piqirun.parse_required_field 2 parse_uint x in
+  let _id, x = Piqirun.parse_optional_field 3 parse_string x in
+  let _on_enter, x = Piqirun.parse_repeated_field 4 parse_expression x in
+  let _on_exit, x = Piqirun.parse_repeated_field 5 parse_expression x in
+  let _invocations, x = Piqirun.parse_repeated_field 6 parse_invoke x in
+  let _data, x = Piqirun.parse_repeated_field 7 parse_expression x in
+  let _donedata, x = Piqirun.parse_optional_field 8 parse_expression x in
+  let _parent, x = Piqirun.parse_required_field 9 parse_ref x in
+  let _children, x = Piqirun.parse_repeated_field 10 parse_ref x in
+  let _ancestors, x = Piqirun.parse_repeated_field 11 parse_ref x in
+  let _completion, x = Piqirun.parse_repeated_field 12 parse_ref x in
+  let _transitions, x = Piqirun.parse_repeated_field 13 parse_ref x in
+  Piqirun.check_unparsed_fields x;
+  {
+    State.t = _t;
+    State.idx = _idx;
+    State.id = _id;
+    State.on_enter = _on_enter;
+    State.on_exit = _on_exit;
+    State.invocations = _invocations;
+    State.data = _data;
+    State.donedata = _donedata;
+    State.parent = _parent;
+    State.children = _children;
+    State.ancestors = _ancestors;
+    State.completion = _completion;
+    State.transitions = _transitions;
+  }
 
 and parse_transition_type x =
   match Piqirun.int32_of_signed_varint x with
-    | 1l -> `external_
+    | 1l -> `targetless
     | 2l -> `internal
+    | 3l -> `spontaneous
+    | 4l -> `history
+    | 5l -> `initial
     | x -> Piqirun.error_enum_const x
 and packed_parse_transition_type x =
   match Piqirun.int32_of_packed_signed_varint x with
-    | 1l -> `external_
+    | 1l -> `targetless
     | 2l -> `internal
+    | 3l -> `spontaneous
+    | 4l -> `history
+    | 5l -> `initial
     | x -> Piqirun.error_enum_const x
 
 and parse_transition x =
   let x = Piqirun.parse_record x in
-  let _idx, x = Piqirun.parse_required_field 1 parse_uint x in
-  let _depth, x = Piqirun.parse_required_field 2 parse_uint x in
-  let _scope, x = Piqirun.parse_required_field 3 parse_ref x in
-  let _source, x = Piqirun.parse_optional_field 4 parse_ref x in
-  let _targets, x = Piqirun.parse_repeated_field 5 parse_ref x in
-  let _events, x = Piqirun.parse_repeated_field 6 parse_string x in
-  let _condition, x = Piqirun.parse_optional_field 7 parse_expression x in
-  let _t, x = Piqirun.parse_required_field 8 parse_transition_type x ~default:"\b\001" in
-  let _on_transition, x = Piqirun.parse_repeated_field 9 parse_expression x in
+  let _t, x = Piqirun.parse_required_field 1 parse_transition_type x ~default:"\b\001" in
+  let _idx, x = Piqirun.parse_required_field 2 parse_uint x in
+  let _source, x = Piqirun.parse_required_field 3 parse_ref x in
+  let _events, x = Piqirun.parse_repeated_field 4 parse_string x in
+  let _condition, x = Piqirun.parse_optional_field 5 parse_expression x in
+  let _on_transition, x = Piqirun.parse_repeated_field 6 parse_expression x in
+  let _targets, x = Piqirun.parse_repeated_field 7 parse_ref x in
+  let _conflicts, x = Piqirun.parse_repeated_field 8 parse_ref x in
+  let _exits, x = Piqirun.parse_repeated_field 9 parse_ref x in
   Piqirun.check_unparsed_fields x;
   {
+    Transition.t = _t;
     Transition.idx = _idx;
-    Transition.depth = _depth;
-    Transition.scope = _scope;
     Transition.source = _source;
-    Transition.targets = _targets;
     Transition.events = _events;
     Transition.condition = _condition;
-    Transition.t = _t;
     Transition.on_transition = _on_transition;
+    Transition.targets = _targets;
+    Transition.conflicts = _conflicts;
+    Transition.exits = _exits;
   }
 
 
@@ -266,9 +259,9 @@ and gen__content code (x:Statechart.content) =
 
 and gen__document code x =
   let _name = Piqirun.gen_optional_field 1 gen__string x.Document.name in
-  let _initial_transitions = Piqirun.gen_repeated_field 2 gen__transition x.Document.initial_transitions in
-  let _states = Piqirun.gen_repeated_field 3 gen__state x.Document.states in
-  Piqirun.gen_record code (_name :: _initial_transitions :: _states :: [])
+  let _states = Piqirun.gen_repeated_field 2 gen__state x.Document.states in
+  let _transitions = Piqirun.gen_repeated_field 3 gen__transition x.Document.transitions in
+  Piqirun.gen_record code (_name :: _states :: _transitions :: [])
 
 and gen__expression_type code x =
   Piqirun.int32_to_signed_varint code (match x with
@@ -340,76 +333,71 @@ and gen__param code x =
 and gen__ref code x = gen__uint code x
 and packed_gen__ref x = packed_gen__uint x
 
-and gen__state code x =
-  let _idx = Piqirun.gen_required_field 1 gen__uint x.State.idx in
-  let _depth = Piqirun.gen_required_field 2 gen__uint x.State.depth in
-  let _id = Piqirun.gen_optional_field 3 gen__string x.State.id in
-  let _t = Piqirun.gen_required_field 4 gen__state_type x.State.t in
-  let _initial = Piqirun.gen_repeated_field 5 gen__ref x.State.initial in
-  let _transitions = Piqirun.gen_repeated_field 6 gen__transition x.State.transitions in
-  let _invocations = Piqirun.gen_repeated_field 7 gen__invoke x.State.invocations in
-  let _on_enter = Piqirun.gen_repeated_field 8 gen__expression x.State.on_enter in
-  let _on_exit = Piqirun.gen_repeated_field 9 gen__expression x.State.on_exit in
-  let _children = Piqirun.gen_repeated_field 10 gen__ref x.State.children in
-  let _parent = Piqirun.gen_optional_field 11 gen__ref x.State.parent in
-  let _ancestors = Piqirun.gen_repeated_field 12 gen__ref x.State.ancestors in
-  let _descendants = Piqirun.gen_repeated_field 13 gen__ref x.State.descendants in
-  let _history = Piqirun.gen_repeated_field 14 gen__ref x.State.history in
-  let _history_type = Piqirun.gen_optional_field 15 gen__history_type x.State.history_type in
-  Piqirun.gen_record code (_idx :: _depth :: _id :: _t :: _initial :: _transitions :: _invocations :: _on_enter :: _on_exit :: _children :: _parent :: _ancestors :: _descendants :: _history :: _history_type :: [])
-
 and gen__state_type code x =
   Piqirun.int32_to_signed_varint code (match x with
     | `compound -> 1l
-    | `basic -> 2l
+    | `atomic -> 2l
     | `parallel -> 3l
-    | `history -> 4l
-    | `initial -> 5l
-    | `final -> 6l
+    | `history_shallow -> 4l
+    | `history_deep -> 5l
+    | `initial -> 6l
+    | `final -> 7l
   )
 and packed_gen__state_type x =
   Piqirun.int32_to_packed_signed_varint (match x with
     | `compound -> 1l
-    | `basic -> 2l
+    | `atomic -> 2l
     | `parallel -> 3l
-    | `history -> 4l
-    | `initial -> 5l
-    | `final -> 6l
+    | `history_shallow -> 4l
+    | `history_deep -> 5l
+    | `initial -> 6l
+    | `final -> 7l
   )
 
-and gen__history_type code x =
-  Piqirun.int32_to_signed_varint code (match x with
-    | `shallow -> 1l
-    | `deep -> 2l
-  )
-and packed_gen__history_type x =
-  Piqirun.int32_to_packed_signed_varint (match x with
-    | `shallow -> 1l
-    | `deep -> 2l
-  )
+and gen__state code x =
+  let _t = Piqirun.gen_required_field 1 gen__state_type x.State.t in
+  let _idx = Piqirun.gen_required_field 2 gen__uint x.State.idx in
+  let _id = Piqirun.gen_optional_field 3 gen__string x.State.id in
+  let _on_enter = Piqirun.gen_repeated_field 4 gen__expression x.State.on_enter in
+  let _on_exit = Piqirun.gen_repeated_field 5 gen__expression x.State.on_exit in
+  let _invocations = Piqirun.gen_repeated_field 6 gen__invoke x.State.invocations in
+  let _data = Piqirun.gen_repeated_field 7 gen__expression x.State.data in
+  let _donedata = Piqirun.gen_optional_field 8 gen__expression x.State.donedata in
+  let _parent = Piqirun.gen_required_field 9 gen__ref x.State.parent in
+  let _children = Piqirun.gen_repeated_field 10 gen__ref x.State.children in
+  let _ancestors = Piqirun.gen_repeated_field 11 gen__ref x.State.ancestors in
+  let _completion = Piqirun.gen_repeated_field 12 gen__ref x.State.completion in
+  let _transitions = Piqirun.gen_repeated_field 13 gen__ref x.State.transitions in
+  Piqirun.gen_record code (_t :: _idx :: _id :: _on_enter :: _on_exit :: _invocations :: _data :: _donedata :: _parent :: _children :: _ancestors :: _completion :: _transitions :: [])
 
 and gen__transition_type code x =
   Piqirun.int32_to_signed_varint code (match x with
-    | `external_ -> 1l
+    | `targetless -> 1l
     | `internal -> 2l
+    | `spontaneous -> 3l
+    | `history -> 4l
+    | `initial -> 5l
   )
 and packed_gen__transition_type x =
   Piqirun.int32_to_packed_signed_varint (match x with
-    | `external_ -> 1l
+    | `targetless -> 1l
     | `internal -> 2l
+    | `spontaneous -> 3l
+    | `history -> 4l
+    | `initial -> 5l
   )
 
 and gen__transition code x =
-  let _idx = Piqirun.gen_required_field 1 gen__uint x.Transition.idx in
-  let _depth = Piqirun.gen_required_field 2 gen__uint x.Transition.depth in
-  let _scope = Piqirun.gen_required_field 3 gen__ref x.Transition.scope in
-  let _source = Piqirun.gen_optional_field 4 gen__ref x.Transition.source in
-  let _targets = Piqirun.gen_repeated_field 5 gen__ref x.Transition.targets in
-  let _events = Piqirun.gen_repeated_field 6 gen__string x.Transition.events in
-  let _condition = Piqirun.gen_optional_field 7 gen__expression x.Transition.condition in
-  let _t = Piqirun.gen_required_field 8 gen__transition_type x.Transition.t in
-  let _on_transition = Piqirun.gen_repeated_field 9 gen__expression x.Transition.on_transition in
-  Piqirun.gen_record code (_idx :: _depth :: _scope :: _source :: _targets :: _events :: _condition :: _t :: _on_transition :: [])
+  let _t = Piqirun.gen_required_field 1 gen__transition_type x.Transition.t in
+  let _idx = Piqirun.gen_required_field 2 gen__uint x.Transition.idx in
+  let _source = Piqirun.gen_required_field 3 gen__ref x.Transition.source in
+  let _events = Piqirun.gen_repeated_field 4 gen__string x.Transition.events in
+  let _condition = Piqirun.gen_optional_field 5 gen__expression x.Transition.condition in
+  let _on_transition = Piqirun.gen_repeated_field 6 gen__expression x.Transition.on_transition in
+  let _targets = Piqirun.gen_repeated_field 7 gen__ref x.Transition.targets in
+  let _conflicts = Piqirun.gen_repeated_field 8 gen__ref x.Transition.conflicts in
+  let _exits = Piqirun.gen_repeated_field 9 gen__ref x.Transition.exits in
+  Piqirun.gen_record code (_t :: _idx :: _source :: _events :: _condition :: _on_transition :: _targets :: _conflicts :: _exits :: [])
 
 
 let gen_float64 x = gen__float64 (-1) x
@@ -425,9 +413,8 @@ let gen_expression x = gen__expression (-1) x
 let gen_invoke x = gen__invoke (-1) x
 let gen_param x = gen__param (-1) x
 let gen_ref x = gen__ref (-1) x
-let gen_state x = gen__state (-1) x
 let gen_state_type x = gen__state_type (-1) x
-let gen_history_type x = gen__history_type (-1) x
+let gen_state x = gen__state (-1) x
 let gen_transition_type x = gen__transition_type (-1) x
 let gen_transition x = gen__transition (-1) x
 
@@ -442,8 +429,8 @@ and default_content () = `string (default_string ())
 and default_document () =
   {
     Document.name = None;
-    Document.initial_transitions = [];
     Document.states = [];
+    Document.transitions = [];
   }
 and default_expression_type () = `block
 and default_expression () =
@@ -471,36 +458,33 @@ and default_param () =
     Param.expression = None;
   }
 and default_ref () = default_uint ()
+and default_state_type () = `compound
 and default_state () =
   {
-    State.idx = default_uint ();
-    State.depth = default_uint ();
-    State.id = None;
     State.t = parse_state_type (Piqirun.parse_default "\b\001");
-    State.initial = [];
-    State.transitions = [];
-    State.invocations = [];
+    State.idx = default_uint ();
+    State.id = None;
     State.on_enter = [];
     State.on_exit = [];
+    State.invocations = [];
+    State.data = [];
+    State.donedata = None;
+    State.parent = default_ref ();
     State.children = [];
-    State.parent = None;
     State.ancestors = [];
-    State.descendants = [];
-    State.history = [];
-    State.history_type = None;
+    State.completion = [];
+    State.transitions = [];
   }
-and default_state_type () = `compound
-and default_history_type () = `shallow
-and default_transition_type () = `external_
+and default_transition_type () = `targetless
 and default_transition () =
   {
+    Transition.t = parse_transition_type (Piqirun.parse_default "\b\001");
     Transition.idx = default_uint ();
-    Transition.depth = default_uint ();
-    Transition.scope = default_ref ();
-    Transition.source = None;
-    Transition.targets = [];
+    Transition.source = default_ref ();
     Transition.events = [];
     Transition.condition = None;
-    Transition.t = parse_transition_type (Piqirun.parse_default "\b\001");
     Transition.on_transition = [];
+    Transition.targets = [];
+    Transition.conflicts = [];
+    Transition.exits = [];
   }
