@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: dd9c8e39ef61d620b9274f5deb38637e)
+# DO NOT EDIT (digest: 0f62024f17462f93d351b41f109d3aee)
 version = "dev"
 description = "Statechart implementation for OCaml"
 archive(byte) = "statechart.cma"
@@ -7,37 +7,15 @@ archive(byte, plugin) = "statechart.cma"
 archive(native) = "statechart.cmxa"
 archive(native, plugin) = "statechart.cmxs"
 exists_if = "statechart.cma"
-package "translator" (
- version = "dev"
- description = "Statechart implementation for OCaml"
- requires = "statechart statechart.analyzer"
- archive(byte) = "statechart_translator.cma"
- archive(byte, plugin) = "statechart_translator.cma"
- archive(native) = "statechart_translator.cmxa"
- archive(native, plugin) = "statechart_translator.cmxs"
- exists_if = "statechart_translator.cma"
-)
-
 package "scxml" (
  version = "dev"
  description = "Statechart implementation for OCaml"
- requires = "statechart statechart.analyzer humane_re markup"
+ requires = "statechart humane_re markup"
  archive(byte) = "statechart_scxml.cma"
  archive(byte, plugin) = "statechart_scxml.cma"
  archive(native) = "statechart_scxml.cmxa"
  archive(native, plugin) = "statechart_scxml.cmxs"
  exists_if = "statechart_scxml.cma"
-)
-
-package "interpreter" (
- version = "dev"
- description = "Statechart implementation for OCaml"
- requires = "statechart"
- archive(byte) = "statechart_interpreter.cma"
- archive(byte, plugin) = "statechart_interpreter.cma"
- archive(native) = "statechart_interpreter.cmxa"
- archive(native, plugin) = "statechart_interpreter.cmxs"
- exists_if = "statechart_interpreter.cma"
 )
 
 package "format" (
@@ -49,38 +27,6 @@ package "format" (
  archive(native) = "statechart_format.cmxa"
  archive(native, plugin) = "statechart_format.cmxs"
  exists_if = "statechart_format.cma"
-)
-
-package "datamodel" (
- version = "dev"
- description = "Statechart implementation for OCaml"
- requires = "statechart"
- archive(byte) = "statechart_datamodel.cma"
- archive(byte, plugin) = "statechart_datamodel.cma"
- archive(native) = "statechart_datamodel.cmxa"
- archive(native, plugin) = "statechart_datamodel.cmxs"
- exists_if = "statechart_datamodel.cma"
- package "ecmascript" (
-  version = "dev"
-  description = "Statechart implementation for OCaml"
-  requires = "statechart statechart.datamodel flow_parser"
-  archive(byte) = "statechart_datamodel_ecmascript.cma"
-  archive(byte, plugin) = "statechart_datamodel_ecmascript.cma"
-  archive(native) = "statechart_datamodel_ecmascript.cmxa"
-  archive(native, plugin) = "statechart_datamodel_ecmascript.cmxs"
-  exists_if = "statechart_datamodel_ecmascript.cma"
- )
-)
-
-package "analyzer" (
- version = "dev"
- description = "Statechart implementation for OCaml"
- requires = "statechart statechart.datamodel"
- archive(byte) = "statechart_analyzer.cma"
- archive(byte, plugin) = "statechart_analyzer.cma"
- archive(native) = "statechart_analyzer.cmxa"
- archive(native, plugin) = "statechart_analyzer.cmxs"
- exists_if = "statechart_analyzer.cma"
 )
 # OASIS_STOP
 

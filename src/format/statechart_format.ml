@@ -1,4 +1,4 @@
-open Statechart
+open Statechart_executable
 module Piqirun = Statechart_format_runtime
 
 let rec parse_float64 x = Piqirun.float_of_fixed64 x
@@ -40,8 +40,8 @@ and parse_document x =
   Piqirun.check_unparsed_fields x;
   {
     Document.name = _name;
-    Document.states = _states;
-    Document.transitions = _transitions;
+    Document.states = Array.of_list _states;
+    Document.transitions = Array.of_list _transitions;
   }
 
 and parse_expression_type x =
@@ -120,9 +120,9 @@ and parse_invoke x =
     Invoke.src = _src;
     Invoke.id = _id;
     Invoke.autoforward = _autoforward;
-    Invoke.params = _params;
+    Invoke.params = Array.of_list _params;
     Invoke.content = _content;
-    Invoke.on_exit = _on_exit;
+    Invoke.on_exit = Array.of_list _on_exit;
   }
 
 and parse_param x =
@@ -179,16 +179,16 @@ and parse_state x =
     State.t = _t;
     State.idx = _idx;
     State.id = _id;
-    State.on_enter = _on_enter;
-    State.on_exit = _on_exit;
-    State.invocations = _invocations;
-    State.data = _data;
+    State.on_enter = Array.of_list _on_enter;
+    State.on_exit = Array.of_list _on_exit;
+    State.invocations = Array.of_list _invocations;
+    State.data = Array.of_list _data;
     State.donedata = _donedata;
     State.parent = _parent;
-    State.children = _children;
-    State.ancestors = _ancestors;
-    State.completion = _completion;
-    State.transitions = _transitions;
+    State.children = Array.of_list _children;
+    State.ancestors = Array.of_list _ancestors;
+    State.completion = Array.of_list _completion;
+    State.transitions = Array.of_list _transitions;
   }
 
 and parse_transition_type x =
@@ -224,12 +224,12 @@ and parse_transition x =
     Transition.t = _t;
     Transition.idx = _idx;
     Transition.source = _source;
-    Transition.events = _events;
+    Transition.events = Array.of_list _events;
     Transition.condition = _condition;
-    Transition.on_transition = _on_transition;
-    Transition.targets = _targets;
-    Transition.conflicts = _conflicts;
-    Transition.exits = _exits;
+    Transition.on_transition = Array.of_list _on_transition;
+    Transition.targets = Array.of_list _targets;
+    Transition.conflicts = Array.of_list _conflicts;
+    Transition.exits = Array.of_list _exits;
   }
 
 
@@ -250,7 +250,7 @@ and packed_gen__float x = packed_gen__float64 x
 and gen__uint code x = Piqirun.int_to_varint code x
 and packed_gen__uint x = Piqirun.int_to_packed_varint x
 
-and gen__content code (x:Statechart.content) =
+and gen__content code (x:content) =
   Piqirun.gen_record code [(match x with
     | `string x -> gen__string 1 x
     | `expression x -> gen__expression 2 x
@@ -259,8 +259,8 @@ and gen__content code (x:Statechart.content) =
 
 and gen__document code x =
   let _name = Piqirun.gen_optional_field 1 gen__string x.Document.name in
-  let _states = Piqirun.gen_repeated_field 2 gen__state x.Document.states in
-  let _transitions = Piqirun.gen_repeated_field 3 gen__transition x.Document.transitions in
+  let _states = Piqirun.gen_repeated_field 2 gen__state (Array.to_list x.Document.states) in
+  let _transitions = Piqirun.gen_repeated_field 3 gen__transition (Array.to_list x.Document.transitions) in
   Piqirun.gen_record code (_name :: _states :: _transitions :: [])
 
 and gen__expression_type code x =
@@ -320,9 +320,9 @@ and gen__invoke code x =
   let _src = Piqirun.gen_optional_field 2 gen__expression x.Invoke.src in
   let _id = Piqirun.gen_optional_field 3 gen__expression x.Invoke.id in
   let _autoforward = Piqirun.gen_required_field 4 gen__bool x.Invoke.autoforward in
-  let _params = Piqirun.gen_repeated_field 5 gen__param x.Invoke.params in
+  let _params = Piqirun.gen_repeated_field 5 gen__param (Array.to_list x.Invoke.params) in
   let _content = Piqirun.gen_optional_field 6 gen__content x.Invoke.content in
-  let _on_exit = Piqirun.gen_repeated_field 7 gen__expression x.Invoke.on_exit in
+  let _on_exit = Piqirun.gen_repeated_field 7 gen__expression (Array.to_list x.Invoke.on_exit) in
   Piqirun.gen_record code (_t :: _src :: _id :: _autoforward :: _params :: _content :: _on_exit :: [])
 
 and gen__param code x =
@@ -358,16 +358,16 @@ and gen__state code x =
   let _t = Piqirun.gen_required_field 1 gen__state_type x.State.t in
   let _idx = Piqirun.gen_required_field 2 gen__uint x.State.idx in
   let _id = Piqirun.gen_optional_field 3 gen__string x.State.id in
-  let _on_enter = Piqirun.gen_repeated_field 4 gen__expression x.State.on_enter in
-  let _on_exit = Piqirun.gen_repeated_field 5 gen__expression x.State.on_exit in
-  let _invocations = Piqirun.gen_repeated_field 6 gen__invoke x.State.invocations in
-  let _data = Piqirun.gen_repeated_field 7 gen__expression x.State.data in
+  let _on_enter = Piqirun.gen_repeated_field 4 gen__expression (Array.to_list x.State.on_enter) in
+  let _on_exit = Piqirun.gen_repeated_field 5 gen__expression (Array.to_list x.State.on_exit) in
+  let _invocations = Piqirun.gen_repeated_field 6 gen__invoke (Array.to_list x.State.invocations) in
+  let _data = Piqirun.gen_repeated_field 7 gen__expression (Array.to_list x.State.data) in
   let _donedata = Piqirun.gen_optional_field 8 gen__expression x.State.donedata in
   let _parent = Piqirun.gen_required_field 9 gen__ref x.State.parent in
-  let _children = Piqirun.gen_repeated_field 10 gen__ref x.State.children in
-  let _ancestors = Piqirun.gen_repeated_field 11 gen__ref x.State.ancestors in
-  let _completion = Piqirun.gen_repeated_field 12 gen__ref x.State.completion in
-  let _transitions = Piqirun.gen_repeated_field 13 gen__ref x.State.transitions in
+  let _children = Piqirun.gen_repeated_field 10 gen__ref (Array.to_list x.State.children) in
+  let _ancestors = Piqirun.gen_repeated_field 11 gen__ref (Array.to_list x.State.ancestors) in
+  let _completion = Piqirun.gen_repeated_field 12 gen__ref (Array.to_list x.State.completion) in
+  let _transitions = Piqirun.gen_repeated_field 13 gen__ref (Array.to_list x.State.transitions) in
   Piqirun.gen_record code (_t :: _idx :: _id :: _on_enter :: _on_exit :: _invocations :: _data :: _donedata :: _parent :: _children :: _ancestors :: _completion :: _transitions :: [])
 
 and gen__transition_type code x =
@@ -391,12 +391,12 @@ and gen__transition code x =
   let _t = Piqirun.gen_required_field 1 gen__transition_type x.Transition.t in
   let _idx = Piqirun.gen_required_field 2 gen__uint x.Transition.idx in
   let _source = Piqirun.gen_required_field 3 gen__ref x.Transition.source in
-  let _events = Piqirun.gen_repeated_field 4 gen__string x.Transition.events in
+  let _events = Piqirun.gen_repeated_field 4 gen__string (Array.to_list x.Transition.events) in
   let _condition = Piqirun.gen_optional_field 5 gen__expression x.Transition.condition in
-  let _on_transition = Piqirun.gen_repeated_field 6 gen__expression x.Transition.on_transition in
-  let _targets = Piqirun.gen_repeated_field 7 gen__ref x.Transition.targets in
-  let _conflicts = Piqirun.gen_repeated_field 8 gen__ref x.Transition.conflicts in
-  let _exits = Piqirun.gen_repeated_field 9 gen__ref x.Transition.exits in
+  let _on_transition = Piqirun.gen_repeated_field 6 gen__expression (Array.to_list x.Transition.on_transition) in
+  let _targets = Piqirun.gen_repeated_field 7 gen__ref (Array.to_list x.Transition.targets) in
+  let _conflicts = Piqirun.gen_repeated_field 8 gen__ref (Array.to_list x.Transition.conflicts) in
+  let _exits = Piqirun.gen_repeated_field 9 gen__ref (Array.to_list x.Transition.exits) in
   Piqirun.gen_record code (_t :: _idx :: _source :: _events :: _condition :: _on_transition :: _targets :: _conflicts :: _exits :: [])
 
 
@@ -429,8 +429,8 @@ and default_content () = `string (default_string ())
 and default_document () =
   {
     Document.name = None;
-    Document.states = [];
-    Document.transitions = [];
+    Document.states = [||];
+    Document.transitions = [||];
   }
 and default_expression_type () = `block
 and default_expression () =
@@ -448,9 +448,9 @@ and default_invoke () =
     Invoke.src = None;
     Invoke.id = None;
     Invoke.autoforward = parse_bool (Piqirun.parse_default "\b\000");
-    Invoke.params = [];
+    Invoke.params = [||];
     Invoke.content = None;
-    Invoke.on_exit = [];
+    Invoke.on_exit = [||];
   }
 and default_param () =
   {
@@ -464,16 +464,16 @@ and default_state () =
     State.t = parse_state_type (Piqirun.parse_default "\b\001");
     State.idx = default_uint ();
     State.id = None;
-    State.on_enter = [];
-    State.on_exit = [];
-    State.invocations = [];
-    State.data = [];
+    State.on_enter = [||];
+    State.on_exit = [||];
+    State.invocations = [||];
+    State.data = [||];
     State.donedata = None;
     State.parent = default_ref ();
-    State.children = [];
-    State.ancestors = [];
-    State.completion = [];
-    State.transitions = [];
+    State.children = [||];
+    State.ancestors = [||];
+    State.completion = [||];
+    State.transitions = [||];
   }
 and default_transition_type () = `targetless
 and default_transition () =
@@ -481,10 +481,10 @@ and default_transition () =
     Transition.t = parse_transition_type (Piqirun.parse_default "\b\001");
     Transition.idx = default_uint ();
     Transition.source = default_ref ();
-    Transition.events = [];
+    Transition.events = [||];
     Transition.condition = None;
-    Transition.on_transition = [];
-    Transition.targets = [];
-    Transition.conflicts = [];
-    Transition.exits = [];
+    Transition.on_transition = [||];
+    Transition.targets = [||];
+    Transition.conflicts = [||];
+    Transition.exits = [||];
   }

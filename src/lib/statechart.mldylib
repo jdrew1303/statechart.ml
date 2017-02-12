@@ -1,4 +1,11 @@
 # OASIS_START
-# DO NOT EDIT (digest: b80283510d4f3d299d2799acc449aab3)
+# DO NOT EDIT (digest: e0812c8dac56ab6da10d826c5c081ee5)
 Statechart
+Statechart_bitset
+Statechart_datamodel
+Statechart_executable
+Statechart_interpreter
+Statechart_t
+Statechart_translator
+Statechart_validator
 # OASIS_STOP

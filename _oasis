@@ -16,33 +16,22 @@ Description:
 Library statechart
   Path:         src/lib
   Findlibname:  statechart
-  Modules:      Statechart
+  Modules:      Statechart,
+                Statechart_bitset,
+                Statechart_datamodel,
+                Statechart_executable,
+                Statechart_interpreter,
+                Statechart_t,
+                Statechart_translator,
+                Statechart_validator
 
-Library statechart_analyzer
-  Path:          src/analyzer
-  Findlibname:   analyzer
-  FindlibParent: statechart
-  BuildDepends:  statechart,
-                 statechart.datamodel
-  Modules:       Statechart_analyzer,
-                 Statechart_analyzer_printer,
-                 Statechart_analyzer_types
-
-Library statechart_datamodel
-  Path:          src/datamodel
-  Findlibname:   datamodel
-  FindlibParent: statechart
-  BuildDepends:  statechart
-  Modules:       Statechart_datamodel
-
-Library statechart_datamodel_ecmascript
-  Path:          src/datamodel/ecmascript
-  Findlibname:   ecmascript
-  FindlibParent: statechart_datamodel
-  BuildDepends:  statechart,
-                 statechart.datamodel,
-                 flow_parser (>= 0.38.0)
-  Modules:       Statechart_datamodel_ecmascript
+#Library statechart_ecmascript
+#  Path:          src/ecmascript
+#  Findlibname:   ecmascript
+#  FindlibParent: statechart
+#  BuildDepends:  statechart,
+#                 flow_parser (>= 0.38.0)
+#  Modules:       Statechart_ecmascript
 
 Library statechart_format
   Path:          src/format
@@ -52,28 +41,11 @@ Library statechart_format
   Modules:       Statechart_format,
                  Statechart_format_runtime
 
-Library statechart_interpreter
-  Path:          src/interpreter
-  Findlibname:   interpreter
-  FindlibParent: statechart
-  BuildDepends:  statechart
-  Modules:       Statechart_interpreter
-  InternalModules: Statechart_interpreter_engine
-
-Library statechart_translator
-  Path:          src/translator
-  Findlibname:   translator
-  FindlibParent: statechart
-  BuildDepends:  statechart,
-                 statechart.analyzer
-  Modules:       Statechart_translator
-
 Library statechart_scxml
   Path:          src/scxml
   Findlibname:   scxml
   FindlibParent: statechart
   BuildDepends:  statechart,
-                 statechart.analyzer,
                  humane_re (>= 0.1.0),
                  markup (>= 0.7.0)
   Modules:       Statechart_scxml
@@ -81,11 +53,8 @@ Library statechart_scxml
 Executable statechart-scxml
   Path:         src/scxml_cli
   MainIs:       scxml.ml
-  BuildDepends: statechart.analyzer,
-                statechart.datamodel,
-                statechart.datamodel.ecmascript,
-                statechart.interpreter,
-                statechart.translator,
+  BuildDepends: statechart,
+#                statechart.ecmascript,
                 statechart.scxml,
                 cmdliner (>= 0.9)
   CompiledObject: best
@@ -107,12 +76,8 @@ Executable test_statechart
   CompiledObject:   best
   Install:          false
   BuildDepends:     statechart,
-                    statechart.analyzer,
-                    statechart.datamodel,
-                    statechart.datamodel.ecmascript,
+#                    statechart.ecmascript,
                     statechart.format,
-                    statechart.interpreter,
-                    statechart.translator,
                     statechart.scxml,
                     alcotest (>= 0.4.1),
                     crunch (>= 1.4.1)

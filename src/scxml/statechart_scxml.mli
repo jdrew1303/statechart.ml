@@ -1,5 +1,5 @@
 open Markup
-open Statechart_analyzer_types
+open Statechart_t
 
 val from_signals : (Markup.signal, Markup.sync) Markup.stream -> document option
 val from_stream : (char, Markup.sync) Markup.stream -> document option

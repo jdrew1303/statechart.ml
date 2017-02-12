@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: c06eaac1373f68e72863247912b8519a) *)
+(* DO NOT EDIT (digest: 59987364c9002653fc3a54e2fd2f840b) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -888,47 +888,17 @@ let package_default =
      MyOCamlbuildBase.lib_ocaml =
        [
           ("statechart", ["src/lib"], []);
-          ("statechart_datamodel", ["src/datamodel"], []);
-          ("statechart_analyzer", ["src/analyzer"], []);
-          ("statechart_datamodel_ecmascript",
-            ["src/datamodel/ecmascript"],
-            []);
           ("statechart_format", ["src/format"], []);
-          ("statechart_interpreter", ["src/interpreter"], []);
-          ("statechart_translator", ["src/translator"], []);
           ("statechart_scxml", ["src/scxml"], [])
        ];
      lib_c = [];
      flags = [];
      includes =
        [
-          ("test",
-            [
-               "src/analyzer";
-               "src/datamodel";
-               "src/datamodel/ecmascript";
-               "src/format";
-               "src/interpreter";
-               "src/lib";
-               "src/scxml";
-               "src/translator"
-            ]);
-          ("src/translator", ["src/analyzer"; "src/lib"]);
-          ("src/scxml_cli",
-            [
-               "src/analyzer";
-               "src/datamodel";
-               "src/datamodel/ecmascript";
-               "src/interpreter";
-               "src/scxml";
-               "src/translator"
-            ]);
-          ("src/scxml", ["src/analyzer"; "src/lib"]);
-          ("src/interpreter", ["src/lib"]);
-          ("src/format", ["src/lib"]);
-          ("src/datamodel/ecmascript", ["src/datamodel"; "src/lib"]);
-          ("src/datamodel", ["src/lib"]);
-          ("src/analyzer", ["src/datamodel"; "src/lib"])
+          ("test", ["src/format"; "src/lib"; "src/scxml"]);
+          ("src/scxml_cli", ["src/lib"; "src/scxml"]);
+          ("src/scxml", ["src/lib"]);
+          ("src/format", ["src/lib"])
        ]
   }
   ;;
@@ -937,6 +907,6 @@ let conf = {MyOCamlbuildFindlib.no_automatic_syntax = false}
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
-# 941 "myocamlbuild.ml"
+# 911 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch dispatch_default;;

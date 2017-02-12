@@ -1,15 +1,8 @@
-module StateIDMap = Map.Make(struct
-  type t = string
-  let compare = compare
-end)
-
-type state_map = int StateIDMap.t
-
 module rec TYPES:
   sig
     type expr = Expr of string
               | ExprValue of string
-              | ExprParsed of Statechart.Expression.t
+              | ExprParsed of Statechart_executable.expression
               | ExprUnset
     type document_binding =
       [
@@ -94,68 +87,52 @@ and Document:
     type t = {
       name: string option;
       initial: string list;
-      data_model: string option;
+      datamodel: string option;
       binding: TYPES.document_binding;
       children: TYPES.statechart_el list;
       line: int option;
-      state_map: state_map option;
-      state_count: int;
     }
   end = Document
 and State:
   sig
     type t = {
-      idx: int option;
       id: string option;
       initial: string list;
       children: TYPES.statechart_el list;
-      ancestors: int list;
-      descendants: int list;
       line: int option;
     }
   end = State
 and Parallel:
   sig
     type t = {
-      idx: int option;
       id: string option;
       children: TYPES.statechart_el list;
-      ancestors: int list;
-      descendants: int list;
       line: int option;
     }
   end = Parallel
 and Transition:
   sig
     type t = {
-      idx: int option;
       event: string list;
       cond: TYPES.expr;
       target: string list;
       t: TYPES.transition_type;
       children: TYPES.statechart_el list;
-      ancestors: int list;
       line: int option;
     }
   end = Transition
 and Initial:
   sig
     type t = {
-      idx: int option;
       children: TYPES.statechart_el list;
-      ancestors: int list;
-      descendants: int list;
       line: int option;
     }
   end = Initial
 and Final:
   sig
     type t = {
-      idx: int option;
       id: string option;
       children: TYPES.statechart_el list;
-      ancestors: int list;
-      descendants: int list;
       line: int option;
     }
   end = Final
@@ -176,12 +153,9 @@ and OnExit:
 and History:
   sig
     type t = {
-      idx: int option;
       id: string option;
-      children: TYPES.statechart_el list;
       t: TYPES.history_type;
-      ancestors: int list;
-      descendants: int list;
+      children: TYPES.statechart_el list;
       line: int option;
     }
   end = History

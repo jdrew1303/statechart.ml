@@ -26,6 +26,10 @@ setup.log
 /node_modules
 *.log
 
+# js package
+/js/lib
+/js/src
+
 # test data
 /test/w3c
 *.tar.gz

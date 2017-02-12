@@ -1,4 +1,11 @@
-open Statechart_interpreter_engine
+module type Engine = sig
+  type datamodel
+  type executable
+
+  val load_executable : Statechart_executable.expression -> executable
+  val load_query : Statechart_executable.expression -> (datamodel -> bool)
+  val load_event_match : string array -> (string -> bool)
+end
 
 module type Interpreter = sig
   type t
@@ -8,7 +15,7 @@ module type Interpreter = sig
   type executable
   type event
 
-  val load : Statechart.document -> document
+  val load : Statechart_executable.document -> document
 
   val start : document -> datamodel -> t
   val handle_event : document -> t -> event -> t

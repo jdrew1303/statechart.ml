@@ -1,14 +1,13 @@
-open Statechart_interpreter_engine
+module Bitset = Statechart_bitset
 
-module IntSet = Set.Make(struct
-  type t = int
-  let compare = compare
-end)
-module IntSetRev = Set.Make(struct
-  type t = int
-  let compare a b =
-    compare b a
-end)
+module type Engine = sig
+  type datamodel
+  type executable
+
+  val load_executable : Statechart_executable.expression -> executable
+  val load_query : Statechart_executable.expression -> (datamodel -> bool)
+  val load_event_match : string array -> (string -> bool)
+end
 
 module type Interpreter = sig
   type t
@@ -18,7 +17,7 @@ module type Interpreter = sig
   type executable
   type event
 
-  val load : Statechart.document -> document
+  val load : Statechart_executable.document -> document
 
   val start : document -> datamodel -> t
   val handle_event : document -> t -> event -> t
@@ -104,9 +103,9 @@ module Make(Eng : Engine) = struct
         data: executable array;
         donedata: executable option;
         parent: int;
-        children: IntSet.t;
-        ancestors: IntSet.t;
-        completion: IntSet.t;
+        children: Bitset.t;
+        ancestors: Bitset.t;
+        completion: Bitset.t;
         transitions: int array;
       }
     end = State
@@ -119,9 +118,9 @@ module Make(Eng : Engine) = struct
         events: (string -> bool) option;
         condition: query option;
         on_transition: executable array;
-        targets: IntSet.t;
-        conflicts: IntSet.t;
-        exits: IntSetRev.t;
+        targets: Bitset.t;
+        conflicts: Bitset.t;
+        exits: Bitset.t;
       }
     end = Transition
 
@@ -132,10 +131,10 @@ module Make(Eng : Engine) = struct
   type transition = TYPES.transition
 
   type t = {
-    configuration: IntSet.t;
-    history: IntSet.t;
-    invocations: IntSet.t;
-    initialized: IntSet.t;
+    configuration: Bitset.t;
+    history: Bitset.t;
+    invocations: Bitset.t;
+    initialized: Bitset.t;
     datamodel: datamodel;
     executions: executable array;
   }
@@ -143,107 +142,90 @@ module Make(Eng : Engine) = struct
   let resolve doc idx = Array.get doc.Document.states idx
   let resolve_transition doc idx = Array.get doc.Document.transitions idx
 
-  let has_intersection a b =
-    (IntSet.subset a b) || (IntSet.subset b a)
-
-  let cast_exit_set a =
-    IntSetRev.fold IntSet.add a IntSet.empty
-
   let add_entry_ancestors doc entry_set =
-    IntSet.fold (fun idx acc ->
+    Bitset.iter_left (fun idx ->
       let {State.ancestors} = resolve doc idx in
-      IntSet.union acc ancestors
-    ) entry_set entry_set
+      Bitset.bor entry_set ancestors
+    ) entry_set
 
-  let add_entry_descendants_history doc acc state =
+  let add_entry_descendants_history doc entry_set trans_set state =
     (* TODO *)
-    acc
+    ()
 
-  let add_entry_descendants_initial doc acc state =
-    Array.fold_left (fun acc idx ->
-      let entry_set, trans_set = acc in
+  let add_entry_descendants_initial doc entry_set trans_set state =
+    Array.iter (fun idx ->
       let transition = resolve_transition doc idx in
       let targets = transition.Transition.targets in
-      let entry_set = IntSet.remove state.State.idx entry_set in
-      let entry_set = IntSet.union entry_set targets in
-      let trans_set = IntSet.add idx trans_set in
-      let entry_set = IntSet.fold (fun idx entry_set ->
+      Bitset.bor entry_set targets;
+      Bitset.clear entry_set state.State.idx;
+      Bitset.set trans_set idx;
+      Bitset.iter_left (fun idx ->
         let state = resolve doc idx in
-        IntSet.union entry_set state.State.ancestors
-      ) targets entry_set in
-      entry_set, trans_set
-    ) acc state.State.transitions
+        Bitset.bor entry_set state.State.ancestors
+      ) targets;
+    ) state.State.transitions
 
   let should_add_compound_state configuration entry_set exit_set state =
     let {State.children} = state in
-    (not (has_intersection entry_set children)) && (
-      (not (has_intersection configuration children)) ||
-      (has_intersection exit_set children)
+    (not (Bitset.has_and entry_set children)) && (
+      (not (Bitset.has_and configuration children)) ||
+      (Bitset.has_and exit_set children)
     )
 
-  let add_entry_descendants_compound doc configuration acc exit_set state =
-    let entry_set, trans_set = acc in
+  let add_entry_descendants_compound doc configuration entry_set trans_set exit_set state =
     if should_add_compound_state configuration entry_set exit_set state
     then (
       let completion = state.State.completion in
-      let entry_set = IntSet.union entry_set completion in
-      if (not (has_intersection completion state.State.children))
-      then (
-        try
-          let idx = IntSet.choose completion in
-          let child = resolve doc idx in
-          let entry_set = IntSet.union entry_set child.State.ancestors in
-          entry_set, trans_set
-        with
-        | _ -> entry_set, trans_set
+      Bitset.bor entry_set completion;
+      if not (Bitset.has_and completion state.State.children)
+      then match Bitset.first completion with
+      | None -> ()
+      | Some idx -> (
+        let child = resolve doc idx in
+        Bitset.bor entry_set child.State.ancestors
       )
-      else entry_set, trans_set
     )
-    else entry_set, trans_set
 
   let add_entry_descendants doc engine entry_set exit_set trans_set =
     let configuration = engine.configuration in
-    let exit_set = cast_exit_set exit_set in
-    IntSet.fold (fun idx acc ->
+    Bitset.iter_left (fun idx ->
       let state = resolve doc idx in
       match state.State.t with
       | `parallel ->
-        let entry_set, trans_set = acc in
-        let entry_set = IntSet.union entry_set state.State.completion in
-        entry_set, trans_set
+        Bitset.bor entry_set state.State.completion
       | t when t == `history_shallow || t == `history_deep ->
-        add_entry_descendants_history doc acc state
+        add_entry_descendants_history doc entry_set trans_set state
       | `initial ->
-        add_entry_descendants_initial doc acc state
+        add_entry_descendants_initial doc entry_set trans_set state
       | `compound ->
-        add_entry_descendants_compound doc configuration acc exit_set state
+        add_entry_descendants_compound doc configuration entry_set trans_set exit_set state
       | _ ->
-        acc
-    ) entry_set (entry_set, trans_set)
+        ()
+    ) entry_set
 
   let exit_states doc engine exit_set =
-    let executions = IntSetRev.fold (fun idx execs ->
+    let executions = Bitset.fold_right (fun execs idx ->
       let state = resolve doc idx in
       Array.append execs state.State.on_exit
-    ) exit_set engine.executions in
+    ) engine.executions exit_set in
     {engine with executions}
 
   let take_transitions doc engine trans_set =
-    let executions = IntSet.fold (fun idx execs ->
+    let executions = Bitset.fold_left (fun execs idx ->
       let transition = resolve_transition doc idx in
       Array.append execs transition.Transition.on_transition
-    ) trans_set engine.executions in
+    ) engine.executions trans_set in
     {engine with executions}
 
   let initialize_data engine state =
     let idx = state.State.idx in
     let initialized = engine.initialized in
-    if IntSet.mem idx initialized
+    if Bitset.get initialized idx
     then engine
     else (
-      let initialized = IntSet.add idx initialized in
+      Bitset.set initialized idx;
       let executions = Array.append engine.executions state.State.data in
-      {engine with initialized; executions}
+      {engine with executions}
     )
 
   let enter_state doc engine state =
@@ -259,26 +241,28 @@ module Make(Eng : Engine) = struct
     t != `history_shallow && t != `history_deep && t != `initial
 
   let enter_states doc engine entry_set =
-    IntSet.fold (fun idx engine ->
+    let initialized = Bitset.copy engine.initialized in
+    let engine = {engine with initialized} in
+    Bitset.fold_left (fun engine idx ->
       let configuration = engine.configuration in
       let state = resolve doc idx in
-      if IntSet.mem idx configuration && is_proper_state state
+      if Bitset.get configuration idx && is_proper_state state
       then engine
       else enter_state doc engine state
-    ) entry_set engine
+    ) engine entry_set
 
   let establish_entryset doc engine entry_set trans_set exit_set =
-    let entry_set = add_entry_ancestors doc entry_set in
-    let entry_set, trans_set = add_entry_descendants doc engine entry_set exit_set trans_set in
+    add_entry_ancestors doc entry_set;
+    add_entry_descendants doc engine entry_set exit_set trans_set;
     let engine = exit_states doc engine exit_set in
     let engine = take_transitions doc engine trans_set in
     enter_states doc engine entry_set
 
   let is_transition_conflict_free transition conflicts =
-    not (IntSet.mem transition.Transition.idx conflicts)
+    not (Bitset.get conflicts transition.Transition.idx)
 
   let is_transition_active transition configuration =
-    IntSet.mem transition.Transition.source configuration
+    Bitset.get configuration transition.Transition.source
 
   let is_transition_applicable transition event =
     match transition.Transition.events, event with
@@ -292,56 +276,54 @@ module Make(Eng : Engine) = struct
     | Some cond -> cond datamodel
 
   let select_active_transitions doc engine event =
+    let transitions = doc.Document.transitions in
     let configuration = engine.configuration in
     let datamodel = engine.datamodel in
-    let target_set = IntSet.empty in
-    let trans_set = IntSet.empty in
-    let exit_set = IntSetRev.empty in
-    let conflicts = IntSet.empty in
-    let init = target_set, trans_set, exit_set, conflicts in
-    let target_set, trans_set, exit_set, _conflicts = Array.fold_left (fun acc transition ->
+    let target_set = Bitset.copy_clear configuration in
+    let trans_set = Bitset.make (Array.length transitions) in
+    let exit_set = Bitset.copy_clear configuration in
+    let conflicts = Bitset.copy_clear configuration in
+    Array.iter (fun transition ->
       match transition with
       (* never select history or initial transitions automatically *)
       | {Transition.t} when t = `history || t == `initial ->
-        acc
+        ()
       | _ ->
-        let target_set, trans_set, exit_set, conflicts = acc in
         if (is_transition_active transition configuration)
         && (is_transition_conflict_free transition conflicts)
         && (is_transition_applicable transition event)
         && (is_transition_enabled transition datamodel)
         then (
-          let target_set = IntSet.union target_set transition.Transition.targets in
-          let trans_set = IntSet.add transition.Transition.idx trans_set in
-          let exit_set = IntSetRev.union exit_set transition.Transition.exits in
-          let conflicts = IntSet.union conflicts transition.Transition.conflicts in
-          target_set, trans_set, exit_set, conflicts
+          Bitset.bor target_set transition.Transition.targets;
+          Bitset.set trans_set transition.Transition.idx;
+          Bitset.bor exit_set transition.Transition.exits;
+          Bitset.bor conflicts transition.Transition.conflicts
         )
-        else acc
-    ) init doc.Document.transitions in
+    ) transitions;
     target_set, trans_set, exit_set
 
   let remember_history doc engine exit_set =
     let configuration = engine.configuration in
-    let history = Array.fold_left (fun acc state ->
+    let history = Bitset.copy engine.history in
+    Array.iter (fun state ->
       match state with
       | {State.t; parent; completion} when t == `history_deep || t == `history_shallow -> (
-        if IntSetRev.mem parent exit_set
+        if Bitset.get exit_set parent
         then (
-          let tmp_states = IntSet.inter configuration completion in
-          let history = IntSet.diff acc completion in
-          IntSet.union history tmp_states
+          let tmp_states = Bitset.copy completion in
+          Bitset.band tmp_states configuration;
+          Bitset.bxor history completion;
+          Bitset.bor history tmp_states;
         )
-        else acc
       )
-      | _ -> acc
-    ) engine.history doc.Document.states in
+      | _ -> ()
+    ) doc.Document.states;
     {engine with history}
 
   let select_transitions doc engine event =
     let engine = {engine with executions=[||]} in
     let target_set, trans_set, exit_set = select_active_transitions doc engine event in
-    if IntSet.is_empty trans_set
+    if Bitset.has_any trans_set
     (* We are done with the internal events *)
     then engine
     else (
@@ -349,8 +331,8 @@ module Make(Eng : Engine) = struct
       establish_entryset doc engine target_set trans_set exit_set
     )
 
-  let load_list l =
-    Array.of_list (List.map Eng.load_executable l)
+  let load_array l =
+    Array.map Eng.load_executable l
 
   let load_option l =
     match l with
@@ -359,82 +341,80 @@ module Make(Eng : Engine) = struct
 
   let load_transition transition =
     {
-      Transition.idx=transition.Statechart.Transition.idx;
-      source=transition.Statechart.Transition.source;
-      targets=IntSet.of_list transition.Statechart.Transition.targets;
-      events=(match transition.Statechart.Transition.events with
-      | [] -> None
+      Transition.idx=transition.Statechart_executable.Transition.idx;
+      source=transition.Statechart_executable.Transition.source;
+      targets=transition.Statechart_executable.Transition.targets;
+      events=(match transition.Statechart_executable.Transition.events with
+      | [||] -> None
       | events -> Some (Eng.load_event_match events));
-      condition=(match transition.Statechart.Transition.condition with
+      condition=(match transition.Statechart_executable.Transition.condition with
       | None -> None
       | Some c -> Some (Eng.load_query c));
-      t=transition.Statechart.Transition.t;
-      on_transition=load_list transition.Statechart.Transition.on_transition;
-      conflicts=IntSet.of_list transition.Statechart.Transition.conflicts;
-      exits=IntSetRev.of_list transition.Statechart.Transition.exits;
+      t=transition.Statechart_executable.Transition.t;
+      on_transition=load_array transition.Statechart_executable.Transition.on_transition;
+      conflicts=transition.Statechart_executable.Transition.conflicts;
+      exits=transition.Statechart_executable.Transition.exits;
     }
 
   let load_param p =
     {
-      Param.id=p.Statechart.Param.id;
-      expression=load_option p.Statechart.Param.expression;
+      Param.id=p.Statechart_executable.Param.id;
+      expression=load_option p.Statechart_executable.Param.expression;
     }
 
   let load_invoke inv =
     {
-      Invoke.t=load_option inv.Statechart.Invoke.t;
-      src=load_option inv.Statechart.Invoke.src;
-      id=load_option inv.Statechart.Invoke.id;
-      autoforward=inv.Statechart.Invoke.autoforward;
-      params=Array.of_list
-        (List.map load_param inv.Statechart.Invoke.params);
+      Invoke.t=load_option inv.Statechart_executable.Invoke.t;
+      src=load_option inv.Statechart_executable.Invoke.src;
+      id=load_option inv.Statechart_executable.Invoke.id;
+      autoforward=inv.Statechart_executable.Invoke.autoforward;
+      params=Array.map load_param inv.Statechart_executable.Invoke.params;
       (* TODO *)
       content=None;
-      on_exit=load_list inv.Statechart.Invoke.on_exit;
+      on_exit=load_array inv.Statechart_executable.Invoke.on_exit;
     }
 
   let load_state state =
     {
-      State.idx=state.Statechart.State.idx;
-      id=state.Statechart.State.id;
-      t=state.Statechart.State.t;
-      transitions=Array.of_list state.Statechart.State.transitions;
-      invocations=Array.of_list
-        (List.map load_invoke state.Statechart.State.invocations);
-      on_enter=load_list state.Statechart.State.on_enter;
-      on_exit=load_list state.Statechart.State.on_exit;
-      children=IntSet.of_list state.Statechart.State.children;
-      parent=state.Statechart.State.parent;
-      ancestors=IntSet.of_list state.Statechart.State.ancestors;
-      completion=IntSet.empty;
-      data=load_list state.Statechart.State.data;
-      donedata=load_option state.Statechart.State.donedata;
+      State.idx=state.Statechart_executable.State.idx;
+      id=state.Statechart_executable.State.id;
+      t=state.Statechart_executable.State.t;
+      transitions=state.Statechart_executable.State.transitions;
+      invocations=Array.map load_invoke state.Statechart_executable.State.invocations;
+      on_enter=load_array state.Statechart_executable.State.on_enter;
+      on_exit=load_array state.Statechart_executable.State.on_exit;
+      children=state.Statechart_executable.State.children;
+      parent=state.Statechart_executable.State.parent;
+      ancestors=state.Statechart_executable.State.ancestors;
+      completion=state.Statechart_executable.State.completion;
+      data=load_array state.Statechart_executable.State.data;
+      donedata=load_option state.Statechart_executable.State.donedata;
     }
 
   (* Public interface *)
 
   let load src =
     {
-      Document.name=src.Statechart.Document.name;
-      transitions=Array.of_list
-        (List.map load_transition src.Statechart.Document.transitions);
-      states=Array.of_list
-        (List.map load_state src.Statechart.Document.states);
+      Document.name=src.Statechart_executable.Document.name;
+      transitions=Array.map load_transition src.Statechart_executable.Document.transitions;
+      states=Array.map load_state src.Statechart_executable.Document.states;
     }
 
   let start doc datamodel =
+    let states = doc.Document.states in
+    let empty = Bitset.make (Array.length states) in
     let engine = {
-      configuration=IntSet.empty;
-      history=IntSet.empty;
-      initialized=IntSet.empty;
-      invocations=IntSet.empty;
+      configuration=empty;
+      history=empty;
+      initialized=empty;
+      invocations=empty;
       executions=[||];
       datamodel=datamodel;
     } in
-    let initial_state = Array.get doc.Document.states 0 in
+    let initial_state = Array.get states 0 in
     let target_set = initial_state.State.completion in
-    let trans_set = IntSet.empty in
-    let exit_set = IntSetRev.empty in
+    let trans_set = empty in
+    let exit_set = empty in
     establish_entryset doc engine target_set trans_set exit_set
 
   let handle_event doc engine event =
@@ -448,21 +428,22 @@ module Make(Eng : Engine) = struct
     engine
 
   let stop doc engine =
+    let states = doc.Document.states in
     let executions = Array.fold_right (fun state acc ->
-      if IntSet.mem state.State.idx engine.configuration
+      if Bitset.get engine.configuration state.State.idx
       then Array.append acc state.State.on_exit
       else acc
-    ) doc.Document.states engine.executions in
-    {engine with executions; invocations=IntSet.empty}
+    ) states engine.executions in
+    {engine with executions; invocations=Bitset.make (Array.length states)}
 
-  let get_configuration engine = Array.of_list (IntSet.elements engine.configuration)
+  let get_configuration engine = Bitset.to_idx_array engine.configuration
   let get_configuration_names engine doc =
     let configuration = engine.configuration in
-    IntSet.fold (fun idx acc ->
+    Bitset.fold_left (fun acc idx ->
       match resolve doc idx with
       | {State.id=Some id} -> Array.append acc [| id |]
       | _ -> acc
-    ) configuration [| |]
+    ) [| |] configuration
 
   let get_datamodel engine = engine.datamodel
   let put_datamodel engine datamodel = {engine with datamodel=datamodel}

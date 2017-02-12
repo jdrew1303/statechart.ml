@@ -7,10 +7,12 @@
   "author": "Cameron Bytheway <bytheway.cameron@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "bs-platform": "^1.4.1"
+    "bs-platform": "https://github.com/bloomberg/bucklescript",
+    "rollup": "^0.41.4",
+    "rollup-plugin-node-resolve": "^2.0.0"
   },
   "scripts": {
-    "build": "bsb",
+    "build": "bsb && rollup -c rollup.interpreter.js && rollup -c rollup.compiler.js",
     "watch": "bsb -w"
   }
 }

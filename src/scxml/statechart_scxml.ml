@@ -1,5 +1,5 @@
 open Markup
-open Statechart_analyzer_types
+open Statechart_t
 module Str = Humane_re.Str
 
 module Prop = struct
@@ -81,32 +81,24 @@ let parse_scxml line props children =
   Document {
     Document.name=get_prop props "name";
     initial=get_prop props "initial" |> parse_string_list;
-    data_model=get_prop props "datamodel";
+    datamodel=get_prop props "datamodel";
     binding=get_prop props "binding" |> parse_binding;
     children=children;
     line=line;
-    state_map=None;
-    state_count=0;
   }
 
 let parse_state line props children =
   State {
-    State.idx=None;
-    id=get_prop props "id";
+    State.id=get_prop props "id";
     initial=get_prop props "initial" |> parse_string_list;
     children=children;
-    ancestors=[];
-    descendants=[];
     line=line;
   }
 
 let parse_parallel line props children =
   Parallel {
-    Parallel.idx=None;
-    id=get_prop props "id";
+    Parallel.id=get_prop props "id";
     children=children;
-    ancestors=[];
-    descendants=[];
     line=line;
   }
 
@@ -117,32 +109,24 @@ let parse_transition_type t =
 
 let parse_transition line props children =
   Transition {
-    Transition.idx=None;
-    event=get_prop props "event" |> parse_string_list;
+    Transition.event=get_prop props "event" |> parse_string_list;
     cond=get_prop_expr props "cond";
     target=get_prop props "target" |> parse_string_list;
     t=get_prop props "type" |> parse_transition_type;
     children=children;
-    ancestors=[];
     line=line;
   }
 
 let parse_initial line props children =
   Initial {
-    Initial.idx=None;
-    children=children;
-    ancestors=[];
-    descendants=[];
+    Initial.children=children;
     line=line;
   }
 
 let parse_final line props children =
   Final {
-    Final.idx=None;
-    id=get_prop props "id";
+    Final.id=get_prop props "id";
     children=children;
-    ancestors=[];
-    descendants=[];
     line=line;
   }
 
@@ -165,12 +149,9 @@ let parse_history_type t =
 
 let parse_history line props children =
   History {
-    History.idx=None;
-    id=get_prop props "id";
+    History.id=get_prop props "id";
     t=get_prop props "type" |> parse_history_type;
     children=children;
-    ancestors=[];
-    descendants=[];
     line=line;
   }
 
