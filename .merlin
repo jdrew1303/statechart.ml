@@ -1,4 +1,4 @@
 S src/**
 B _build/**
 
-PKG alcotest crunch cmdliner flow_parser humane_re markup
+PKG alcotest crunch cmdliner flow_parser re markup js_of_ocaml js_of_ocaml.ppx

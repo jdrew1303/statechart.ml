@@ -16,6 +16,7 @@ _build/
 *.native
 
 # oasis generated files
+setup.exe
 setup.data
 setup.log
 *.bak
