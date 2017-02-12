@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 0f62024f17462f93d351b41f109d3aee)
+# DO NOT EDIT (digest: b7fa182a1dd85200021cb2a24aa2c8e0)
 version = "dev"
 description = "Statechart implementation for OCaml"
 archive(byte) = "statechart.cma"
@@ -10,7 +10,7 @@ exists_if = "statechart.cma"
 package "scxml" (
  version = "dev"
  description = "Statechart implementation for OCaml"
- requires = "statechart humane_re markup"
+ requires = "statechart markup re re.emacs"
  archive(byte) = "statechart_scxml.cma"
  archive(byte, plugin) = "statechart_scxml.cma"
  archive(native) = "statechart_scxml.cmxa"
@@ -27,6 +27,17 @@ package "format" (
  archive(native) = "statechart_format.cmxa"
  archive(native, plugin) = "statechart_format.cmxs"
  exists_if = "statechart_format.cma"
+)
+
+package "ecmascript" (
+ version = "dev"
+ description = "Statechart implementation for OCaml"
+ requires = "statechart flow_parser"
+ archive(byte) = "statechart_ecmascript.cma"
+ archive(byte, plugin) = "statechart_ecmascript.cma"
+ archive(native) = "statechart_ecmascript.cmxa"
+ archive(native, plugin) = "statechart_ecmascript.cmxs"
+ exists_if = "statechart_ecmascript.cma"
 )
 # OASIS_STOP
 

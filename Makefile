@@ -45,3 +45,6 @@ test/w3c: test/w3c.tar.gz
 
 test/w3c.tar.gz:
 	@wget -P test https://github.com/statechart/scxml-test-suite/releases/download/1.0/w3c.tar.gz
+
+js-build:
+	@yarn build

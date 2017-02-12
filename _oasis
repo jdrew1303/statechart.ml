@@ -16,6 +16,7 @@ Description:
 Library statechart
   Path:         src/lib
   Findlibname:  statechart
+  Install:      true
   Modules:      Statechart,
                 Statechart_bitset,
                 Statechart_datamodel,
@@ -25,13 +26,13 @@ Library statechart
                 Statechart_translator,
                 Statechart_validator
 
-#Library statechart_ecmascript
-#  Path:          src/ecmascript
-#  Findlibname:   ecmascript
-#  FindlibParent: statechart
-#  BuildDepends:  statechart,
-#                 flow_parser (>= 0.38.0)
-#  Modules:       Statechart_ecmascript
+Library statechart_ecmascript
+  Path:          src/ecmascript
+  Findlibname:   ecmascript
+  FindlibParent: statechart
+  BuildDepends:  statechart,
+                 flow_parser (>= 0.38.0)
+  Modules:       Statechart_ecmascript
 
 Library statechart_format
   Path:          src/format
@@ -46,15 +47,16 @@ Library statechart_scxml
   Findlibname:   scxml
   FindlibParent: statechart
   BuildDepends:  statechart,
-                 humane_re (>= 0.1.0),
-                 markup (>= 0.7.0)
+                 markup (>= 0.7.0),
+                 re (>= 1.7.1),
+                 re.emacs
   Modules:       Statechart_scxml
 
 Executable statechart-scxml
   Path:         src/scxml_cli
   MainIs:       scxml.ml
   BuildDepends: statechart,
-#                statechart.ecmascript,
+                statechart.ecmascript,
                 statechart.scxml,
                 cmdliner (>= 0.9)
   CompiledObject: best
@@ -76,7 +78,7 @@ Executable test_statechart
   CompiledObject:   best
   Install:          false
   BuildDepends:     statechart,
-#                    statechart.ecmascript,
+                    statechart.ecmascript,
                     statechart.format,
                     statechart.scxml,
                     alcotest (>= 0.4.1),

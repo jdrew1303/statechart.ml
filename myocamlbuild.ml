@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 59987364c9002653fc3a54e2fd2f840b) *)
+(* DO NOT EDIT (digest: 197dda59e4dd2f056f4a62e7e12a7dc6) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -888,6 +888,7 @@ let package_default =
      MyOCamlbuildBase.lib_ocaml =
        [
           ("statechart", ["src/lib"], []);
+          ("statechart_ecmascript", ["src/ecmascript"], []);
           ("statechart_format", ["src/format"], []);
           ("statechart_scxml", ["src/scxml"], [])
        ];
@@ -895,10 +896,11 @@ let package_default =
      flags = [];
      includes =
        [
-          ("test", ["src/format"; "src/lib"; "src/scxml"]);
-          ("src/scxml_cli", ["src/lib"; "src/scxml"]);
+          ("test", ["src/ecmascript"; "src/format"; "src/lib"; "src/scxml"]);
+          ("src/scxml_cli", ["src/ecmascript"; "src/lib"; "src/scxml"]);
           ("src/scxml", ["src/lib"]);
-          ("src/format", ["src/lib"])
+          ("src/format", ["src/lib"]);
+          ("src/ecmascript", ["src/lib"])
        ]
   }
   ;;
@@ -907,6 +909,6 @@ let conf = {MyOCamlbuildFindlib.no_automatic_syntax = false}
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
-# 911 "myocamlbuild.ml"
+# 913 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch dispatch_default;;

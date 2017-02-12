@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: ee0c35c5df74226d7453ecfa522e94b6)
+# DO NOT EDIT (digest: 102e03eb7b85a70adc00e9a494a286c7)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -16,38 +16,55 @@ true: annot, bin_annot
 "_darcs": not_hygienic
 # Library statechart
 "src/lib/statechart.cmxs": use_statechart
+# Library statechart_ecmascript
+"src/ecmascript/statechart_ecmascript.cmxs": use_statechart_ecmascript
+<src/ecmascript/*.ml{,i,y}>: package(flow_parser)
+<src/ecmascript/*.ml{,i,y}>: use_statechart
 # Library statechart_format
 "src/format/statechart_format.cmxs": use_statechart_format
 <src/format/*.ml{,i,y}>: use_statechart
 # Library statechart_scxml
 "src/scxml/statechart_scxml.cmxs": use_statechart_scxml
-<src/scxml/*.ml{,i,y}>: package(humane_re)
 <src/scxml/*.ml{,i,y}>: package(markup)
+<src/scxml/*.ml{,i,y}>: package(re)
+<src/scxml/*.ml{,i,y}>: package(re.emacs)
 <src/scxml/*.ml{,i,y}>: use_statechart
 # Executable statechart-scxml
 <src/scxml_cli/scxml.{native,byte}>: package(cmdliner)
-<src/scxml_cli/scxml.{native,byte}>: package(humane_re)
+<src/scxml_cli/scxml.{native,byte}>: package(flow_parser)
 <src/scxml_cli/scxml.{native,byte}>: package(markup)
+<src/scxml_cli/scxml.{native,byte}>: package(re)
+<src/scxml_cli/scxml.{native,byte}>: package(re.emacs)
 <src/scxml_cli/scxml.{native,byte}>: use_statechart
+<src/scxml_cli/scxml.{native,byte}>: use_statechart_ecmascript
 <src/scxml_cli/scxml.{native,byte}>: use_statechart_scxml
 <src/scxml_cli/*.ml{,i,y}>: package(cmdliner)
-<src/scxml_cli/*.ml{,i,y}>: package(humane_re)
+<src/scxml_cli/*.ml{,i,y}>: package(flow_parser)
 <src/scxml_cli/*.ml{,i,y}>: package(markup)
+<src/scxml_cli/*.ml{,i,y}>: package(re)
+<src/scxml_cli/*.ml{,i,y}>: package(re.emacs)
 <src/scxml_cli/*.ml{,i,y}>: use_statechart
+<src/scxml_cli/*.ml{,i,y}>: use_statechart_ecmascript
 <src/scxml_cli/*.ml{,i,y}>: use_statechart_scxml
 # Executable test_statechart
 <test/test_statechart.{native,byte}>: package(alcotest)
 <test/test_statechart.{native,byte}>: package(crunch)
-<test/test_statechart.{native,byte}>: package(humane_re)
+<test/test_statechart.{native,byte}>: package(flow_parser)
 <test/test_statechart.{native,byte}>: package(markup)
+<test/test_statechart.{native,byte}>: package(re)
+<test/test_statechart.{native,byte}>: package(re.emacs)
 <test/test_statechart.{native,byte}>: use_statechart
+<test/test_statechart.{native,byte}>: use_statechart_ecmascript
 <test/test_statechart.{native,byte}>: use_statechart_format
 <test/test_statechart.{native,byte}>: use_statechart_scxml
 <test/*.ml{,i,y}>: package(alcotest)
 <test/*.ml{,i,y}>: package(crunch)
-<test/*.ml{,i,y}>: package(humane_re)
+<test/*.ml{,i,y}>: package(flow_parser)
 <test/*.ml{,i,y}>: package(markup)
+<test/*.ml{,i,y}>: package(re)
+<test/*.ml{,i,y}>: package(re.emacs)
 <test/*.ml{,i,y}>: use_statechart
+<test/*.ml{,i,y}>: use_statechart_ecmascript
 <test/*.ml{,i,y}>: use_statechart_format
 <test/*.ml{,i,y}>: use_statechart_scxml
 # OASIS_STOP
@@ -55,3 +72,5 @@ true: annot, bin_annot
 "lib": not_hygienic
 "node_modules": -traverse
 "node_modules": not_hygienic
+"vendor": -traverse
+"vendor": not_hygienic

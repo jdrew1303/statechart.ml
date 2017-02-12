@@ -24,6 +24,7 @@ setup.log
 # bucklescript generated files
 /lib
 /node_modules
+/vendor
 *.log
 
 # js package

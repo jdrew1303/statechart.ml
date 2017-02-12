@@ -1,4 +1,4 @@
-open Statechart
+open Statechart_executable
 open Statechart_datamodel
 open Parser_flow
 open Parser_common

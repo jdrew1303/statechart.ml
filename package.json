@@ -9,11 +9,10 @@
   "devDependencies": {
     "bs-platform": "https://github.com/bloomberg/bucklescript",
     "rollup": "^0.41.4",
-    "rollup-plugin-multi-entry": "^2.0.1",
     "rollup-plugin-node-resolve": "^2.0.0"
   },
   "scripts": {
-    "build": "bsb && rollup -c js/rollup.interpreter.js && rollup -c js/rollup.compiler.js && rollup -c js/rollup.config.js",
+    "build": "bsb",
     "watch": "bsb -w"
   }
 }

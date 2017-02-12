@@ -1,6 +1,5 @@
 open Markup
 open Statechart_t
-module Str = Humane_re.Str
 
 module Prop = struct
   type t = Markup.name * string
@@ -47,10 +46,13 @@ let get_prop_bool props name =
   | Some _ -> Some false
   | _ -> None
 
-let ws_re = Str.regexp "[ \t\n\r]+"
+let ws_re = Re.compile (Re_emacs.re "[ \t\n\r]+")
 let ws_split str =
-  let tokens = Str.split ws_re str in
-  List.filter (fun s -> String.equal s "" |> not) tokens
+  let tokens = Re.split ws_re str in
+  List.filter (fun s -> match s with
+    | "" -> false
+    | _ -> true
+  ) tokens
 
 let map_children children =
 List.map (fun child ->

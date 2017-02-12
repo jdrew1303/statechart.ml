@@ -22,9 +22,7 @@ build-test: [
 ]
 depends: [
   "flow_parser" {>= "0.38.0"}
-  "humane-re" {>= "0.1.0"}
-  "piqilib" {>= "0.6"}
-  "lambdasoup" {>= "0.6"}
+  "re" {>= "1.7.1"}
   "markup" {>= "0.7"}
   "alcotest" {test & >= "0.4.1"}
   "crunch" {test & >= "1.4.1"}

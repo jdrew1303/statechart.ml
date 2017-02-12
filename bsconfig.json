@@ -2,8 +2,15 @@
   "name" : "statechart",
   "package-specs" : ["es6", "commonjs"],
   "sources" : [
-    {"dir": "src/engine/js", "type": "lib"},
+    {"dir": "src/binding/js", "type": "lib"},
     {"dir": "src/lib", "type": "lib"},
+    {"dir": "src/ecmascript", "type": "lib"},
+    {"dir": "src/scxml", "type": "lib"},
+    {"dir": "vendor/flow_parser.0.38.0/src/parser", "type": "lib"},
+    {"dir": "vendor/uchar.0.0.1/src", "type": "lib"},
+    {"dir": "vendor/markup.0.7.4/src", "type": "lib"},
+    {"dir": "vendor/uutf.1.0.0/src", "type": "lib"},
+    {"dir": "vendor/re.1.7.1/lib", "type": "lib"},
   ],
   "generate-merlin": false
 }
