@@ -174,6 +174,7 @@ and parse_state x =
   let _ancestors, x = Piqirun.parse_repeated_field 11 parse_ref x in
   let _completion, x = Piqirun.parse_repeated_field 12 parse_ref x in
   let _transitions, x = Piqirun.parse_repeated_field 13 parse_ref x in
+  let _has_history, x = Piqirun.parse_required_field 15 parse_bool x ~default:"\b\000" in
   Piqirun.check_unparsed_fields x;
   {
     State.t = _t;
@@ -189,6 +190,7 @@ and parse_state x =
     State.ancestors = Array.of_list _ancestors;
     State.completion = Array.of_list _completion;
     State.transitions = Array.of_list _transitions;
+    State.has_history = _has_history;
   }
 
 and parse_transition_type x =
@@ -372,19 +374,21 @@ and gen__state code x =
 
 and gen__transition_type code x =
   Piqirun.int32_to_signed_varint code (match x with
-    | `targetless -> 1l
-    | `internal -> 2l
-    | `spontaneous -> 3l
-    | `history -> 4l
-    | `initial -> 5l
+    | `external_ -> 1l
+    | `targetless -> 2l
+    | `internal -> 3l
+    | `spontaneous -> 4l
+    | `history -> 5l
+    | `initial -> 6l
   )
 and packed_gen__transition_type x =
   Piqirun.int32_to_packed_signed_varint (match x with
-    | `targetless -> 1l
-    | `internal -> 2l
-    | `spontaneous -> 3l
-    | `history -> 4l
-    | `initial -> 5l
+    | `external_ -> 6l
+    | `targetless -> 2l
+    | `internal -> 3l
+    | `spontaneous -> 4l
+    | `history -> 5l
+    | `initial -> 6l
   )
 
 and gen__transition code x =
@@ -474,6 +478,7 @@ and default_state () =
     State.ancestors = [||];
     State.completion = [||];
     State.transitions = [||];
+    State.has_history = false;
   }
 and default_transition_type () = `targetless
 and default_transition () =

@@ -22,4 +22,5 @@ val first : t -> int option
 
 val of_list : int list -> t
 val to_list : t -> int list
+val of_idx_array : int array -> int -> t
 val to_idx_array : t -> int array

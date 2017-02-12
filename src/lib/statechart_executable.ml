@@ -57,6 +57,7 @@ module rec TYPES:
       ]
     type transition_type =
       [
+        | `external_
         | `targetless
         | `internal
         | `spontaneous
@@ -124,6 +125,7 @@ and State:
       ancestors: TYPES.ref array;
       completion: TYPES.ref array;
       transitions: TYPES.ref array;
+      has_history: bool;
     }
   end = State
 and Transition:

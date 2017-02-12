@@ -127,3 +127,8 @@ let to_idx_array a =
     idx :: acc
   ) [] a in
   Array.of_list l
+
+let of_idx_array a size =
+  let bs = make size in
+  Array.iter (set bs) a;
+  bs

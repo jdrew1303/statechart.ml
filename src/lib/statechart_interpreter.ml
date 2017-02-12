@@ -57,6 +57,7 @@ module Make(Eng : Engine) = struct
           | `spontaneous
           | `history
           | `initial
+          | `external_
         ]
       type document = Document.t
       type invoke = Invoke.t

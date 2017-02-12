@@ -49,10 +49,61 @@ let get_next r =
   r := idx + 1;
   idx
 
+let resolve_list map l =
+  let targets = List.map (fun k -> StringMap.find k map) l in
+  Array.of_list targets
+
+let maybe_find map k =
+  try
+    Some (IntMap.find k map)
+  with
+  | _ -> None
+
+let has_history children state_map =
+  let n = Array.length children in
+  let rec find i =
+    if i >= n then false
+    else (
+      let {Tgt.State.t} = IntMap.find i state_map in
+      (t == `history_deep || t == `history_shallow) || find (i + 1)
+    )
+  in
+  find 0
+
+let get_history_completion state completions =
+  (* TODO *)
+  [||]
+
+let find_initial states children =
+  match Array.length children with
+  | 0 -> [||]
+  | n ->
+    let rec find i =
+      if i >= n then [|Array.get children 0|]
+      else (
+        let idx = Array.get children i in
+        match IntMap.find idx states with
+        | {Tgt.State.t=`initial} -> [|idx|]
+        | _ -> find (i + 1)
+      )
+    in
+    find 0
+
+let get_completion state completions state_map states =
+  match state with
+  | {Tgt.State.t=t} when t == `history_deep || t == `history_shallow -> get_history_completion state completions
+  | {Tgt.State.t=`parallel; children} -> children
+  | {Tgt.State.idx=idx} -> (
+    match maybe_find completions idx with
+    | None -> find_initial states state.Tgt.State.children
+    | Some initial -> resolve_list state_map initial
+  )
+
 let flatten document =
   let states = ref IntMap.empty in
   let state_idx = ref 0 in
   let state_map = ref StringMap.empty in
+  let state_completions = ref IntMap.empty in
   let transitions = ref IntMap.empty in
   let transition_idx = ref 0 in
   let transition_targets = ref IntMap.empty in
@@ -69,6 +120,7 @@ let flatten document =
     let idx = get_next state_idx in
     let children, on_enter, on_exit, transitions, invocations =
       translate_children document.Src.Document.children [idx] in
+    set_mut state_completions idx document.Src.Document.initial;
     set_mut states idx {
       Tgt.State.t=`compound;
       idx;
@@ -85,6 +137,7 @@ let flatten document =
       ancestors=[||];
       completion=[||];
       transitions;
+      has_history=false;
     };
 
   and translate_state state ancestors =
@@ -92,6 +145,7 @@ let flatten document =
     let children, on_enter, on_exit, transitions, invocations =
       translate_children state.Src.State.children (idx :: ancestors) in
     maybe_map_state idx state.Src.State.id;
+    set_mut state_completions idx state.Src.State.initial;
     set_mut states idx {
       Tgt.State.t=(match children with
       | [||] -> `atomic
@@ -110,6 +164,7 @@ let flatten document =
       ancestors=Array.of_list ancestors;
       completion=[||];
       transitions;
+      has_history=false;
     };
     idx
 
@@ -134,6 +189,7 @@ let flatten document =
       ancestors=Array.of_list ancestors;
       completion=[||];
       transitions;
+      has_history=false;
     };
     idx
 
@@ -146,7 +202,12 @@ let flatten document =
     set_mut transition_targets idx transition.Src.Transition.target;
     let children = translate_executables transition.Src.Transition.children in
     set_mut transitions idx {
-      Tgt.Transition.t=`targetless;
+      Tgt.Transition.t=(match transition with
+      | {Src.Transition.target=[]} -> `targetless
+      | {Src.Transition.t=`internal} -> `internal
+      | {Src.Transition.event=[]} -> `spontaneous
+      | _ -> `external_
+      );
       idx;
       source=parent;
       events=Array.of_list transition.Src.Transition.event;
@@ -178,6 +239,7 @@ let flatten document =
       ancestors=Array.of_list ancestors;
       completion=[||];
       transitions;
+      has_history=false;
     };
     idx
 
@@ -202,6 +264,7 @@ let flatten document =
       ancestors=Array.of_list ancestors;
       completion=[||];
       transitions;
+      has_history=false;
     };
     idx
 
@@ -228,6 +291,7 @@ let flatten document =
       ancestors=Array.of_list ancestors;
       completion=[||];
       transitions;
+      has_history=false;
     };
     idx
 
@@ -241,6 +305,8 @@ let flatten document =
     | Src.OnEntry c -> OnEntry (translate_executables c.Src.OnEntry.children)
     | Src.OnExit c -> OnExit (translate_executables c.Src.OnExit.children)
     | Src.History c -> State (translate_history c ancestors)
+    (* TODO *)
+    | Src.Script c -> OnEntry [||]
     (* TODO datamodel *)
     (* TODO invoke *)
     | _ -> Pass
@@ -341,15 +407,35 @@ let flatten document =
 
   translate_document ();
 
+  let states = !states in
   let state_map = !state_map in
-  let states = map_to_array !states (fun s ->
-    s
+  let state_count = IntMap.cardinal states in
+  let state_completions = !state_completions in
+  let states = map_to_array states (fun s ->
+    let completion = get_completion s state_completions state_map states in
+    let children = s.Tgt.State.children in
+    {s with
+      Tgt.State.completion=Bitset.of_idx_array completion state_count;
+      ancestors=Bitset.of_idx_array s.Tgt.State.ancestors state_count;
+      children=Bitset.of_idx_array children state_count;
+      has_history=has_history children states;
+    }
   ) in
+
+  let transitions = !transitions in
+  let transition_count = IntMap.cardinal transitions in
   let transition_targets = !transition_targets in
-  let transitions = map_to_array !transitions (fun t ->
+  let transitions = map_to_array transitions (fun t ->
     let targets = IntMap.find t.Tgt.Transition.idx transition_targets in
-    let targets = List.map (fun k -> StringMap.find k state_map) targets in
-    {t with Tgt.Transition.targets=Array.of_list targets}
+    (* TODO *)
+    let exits = [||] in
+    (* TODO *)
+    let conflicts = [||] in
+    {t with
+      Tgt.Transition.targets=Bitset.of_idx_array (resolve_list state_map targets) state_count;
+      conflicts=Bitset.of_idx_array conflicts transition_count;
+      exits=Bitset.of_idx_array exits transition_count;
+    }
   ) in
 
   states, transitions

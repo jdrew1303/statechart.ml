@@ -1,5 +1,3 @@
-open Statechart
-
 type result = Program of Statechart_executable.expression
             | Error of (int * string) list
 
