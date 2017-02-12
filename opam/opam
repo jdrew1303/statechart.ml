@@ -24,6 +24,7 @@ depends: [
   "flow_parser" {>= "0.38.0"}
   "re" {>= "1.7.1"}
   "markup" {>= "0.7"}
+  "js_of_ocaml" {>= "2.8"}
   "alcotest" {test & >= "0.4.1"}
   "crunch" {test & >= "1.4.1"}
   "ocamlfind" {build}
