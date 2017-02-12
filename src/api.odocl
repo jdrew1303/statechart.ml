@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: e5fe079af554b34d15fe4f7d5fae9af6)
+# DO NOT EDIT (digest: 4c5eb39f5b0614969535676f5ccf4238)
 lib/Statechart
 lib/Statechart_bitset
 lib/Statechart_datamodel
@@ -11,4 +11,5 @@ lib/Statechart_validator
 format/Statechart_format
 format/Statechart_format_runtime
 scxml/Statechart_scxml
+scxml/Statechart_scxml_parser
 # OASIS_STOP

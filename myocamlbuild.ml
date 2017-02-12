@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 238fbe8ecbe9c410801ecd82a8ceb205) *)
+(* DO NOT EDIT (digest: 197dda59e4dd2f056f4a62e7e12a7dc6) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -893,60 +893,14 @@ let package_default =
           ("statechart_scxml", ["src/scxml"], [])
        ];
      lib_c = [];
-     flags =
-       [
-          (["oasis_executable_statechart_js_byte"; "ocaml"; "link"; "byte"],
-            [
-               (OASISExpr.EBool true,
-                 S
-                   [
-                      A "-g";
-                      A "-bin-annot";
-                      A "-keep-locs";
-                      A "-linkall";
-                      A "-alias-deps"
-                   ])
-            ]);
-          ([
-              "oasis_executable_statechart_js_byte";
-              "ocaml";
-              "ocamldep";
-              "byte"
-           ],
-            [
-               (OASISExpr.EBool true,
-                 S
-                   [
-                      A "-g";
-                      A "-bin-annot";
-                      A "-keep-locs";
-                      A "-linkall";
-                      A "-alias-deps"
-                   ])
-            ]);
-          (["oasis_executable_statechart_js_byte"; "ocaml"; "compile"; "byte"
-           ],
-            [
-               (OASISExpr.EBool true,
-                 S
-                   [
-                      A "-g";
-                      A "-bin-annot";
-                      A "-keep-locs";
-                      A "-linkall";
-                      A "-alias-deps"
-                   ])
-            ])
-       ];
+     flags = [];
      includes =
        [
           ("test", ["src/ecmascript"; "src/format"; "src/lib"; "src/scxml"]);
           ("src/scxml_cli", ["src/ecmascript"; "src/lib"; "src/scxml"]);
           ("src/scxml", ["src/lib"]);
           ("src/format", ["src/lib"]);
-          ("src/ecmascript", ["src/lib"]);
-          ("src/binding/js_of_ocaml",
-            ["src/ecmascript"; "src/format"; "src/lib"; "src/scxml"])
+          ("src/ecmascript", ["src/lib"])
        ]
   }
   ;;
@@ -955,6 +909,6 @@ let conf = {MyOCamlbuildFindlib.no_automatic_syntax = false}
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
-# 959 "myocamlbuild.ml"
+# 913 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch dispatch_default;;

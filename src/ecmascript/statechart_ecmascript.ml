@@ -38,7 +38,9 @@ let translate_program ast =
 let translate_errors errors =
   List.map (fun error ->
     let loc, err = error in
-    loc.Loc.start.Loc.line, (Err.PP.error err)
+    let start = loc.Loc.start.Loc.line, loc.Loc.start.Loc.column in
+    let finish = loc.Loc._end.Loc.line, loc.Loc._end.Loc.column in
+    (start, finish), (Err.PP.error err)
   ) errors
 
 let parse content =

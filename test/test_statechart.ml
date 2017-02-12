@@ -21,7 +21,7 @@ let w3_test path description () =
   prerr_endline "DESCRIPTION:";
   prerr_endline ("  " ^ description);
   let channel = open_in path in
-  match Statechart_scxml.from_channel channel with
+  match Statechart_scxml.of_channel channel with
   | None -> ()
   | Some document -> (
     let document, dm_errors = Statechart_datamodel.parse document datamodels in

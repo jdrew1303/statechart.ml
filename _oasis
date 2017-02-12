@@ -8,7 +8,6 @@ Copyrights:  (C) 2017 Cameron Bytheway
 License:     MIT
 Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
-XOCamlbuildPluginTags: package(js_of_ocaml.ocamlbuild)
 OCamlVersion: >= 4.01
 AlphaFeatures: ocamlbuild_more_args
 Synopsis:    Statechart implementation for OCaml
@@ -52,7 +51,8 @@ Library statechart_scxml
                  markup (>= 0.7.0),
                  re (>= 1.7.1),
                  re.emacs
-  Modules:       Statechart_scxml
+  Modules:       Statechart_scxml,
+                 Statechart_scxml_parser
 
 Executable statechart-scxml
   Path:         src/scxml_cli
@@ -62,19 +62,6 @@ Executable statechart-scxml
                 statechart.scxml,
                 cmdliner (>= 0.9)
   CompiledObject: best
-
-Executable "statechart_js"
-  Install: false
-  Path: src/binding/js_of_ocaml
-  MainIs: statechart_js.ml
-  BuildDepends: statechart,
-                statechart.ecmascript,
-                statechart.format,
-                statechart.scxml,
-                js_of_ocaml,
-                js_of_ocaml.ppx
-  CompiledObject: byte
-  ByteOpt: -g -bin-annot -keep-locs -linkall -alias-deps
 
 Document api
   Title:                Documentation and API reference

@@ -19,6 +19,7 @@ module rec TYPES:
         | `external_
         | `internal
       ]
+    type loc = (int * int) * (int * int)
     (* Core *)
     type document = Document.t
     type state = State.t
@@ -90,7 +91,7 @@ and Document:
       datamodel: string option;
       binding: TYPES.document_binding;
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Document
 and State:
@@ -99,7 +100,7 @@ and State:
       id: string option;
       initial: string list;
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = State
 and Parallel:
@@ -107,7 +108,7 @@ and Parallel:
     type t = {
       id: string option;
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Parallel
 and Transition:
@@ -118,14 +119,14 @@ and Transition:
       target: string list;
       t: TYPES.transition_type;
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Transition
 and Initial:
   sig
     type t = {
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Initial
 and Final:
@@ -133,21 +134,21 @@ and Final:
     type t = {
       id: string option;
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Final
 and OnEntry:
   sig
     type t = {
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = OnEntry
 and OnExit:
   sig
     type t = {
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = OnExit
 and History:
@@ -156,21 +157,21 @@ and History:
       id: string option;
       t: TYPES.history_type;
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = History
 and Raise:
   sig
     type t = {
       event: string option;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Raise
 and Case:
   sig
     type t = {
       children: TYPES.case_clause list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Case
 and CaseClause:
@@ -178,7 +179,7 @@ and CaseClause:
     type t = {
       cond: TYPES.expr;
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = CaseClause
 and Foreach:
@@ -188,7 +189,7 @@ and Foreach:
       item: TYPES.expr;
       index: TYPES.expr;
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Foreach
 and Log:
@@ -196,14 +197,14 @@ and Log:
     type t = {
       label: string option;
       expr: TYPES.expr;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Log
 and DataModel:
   sig
     type t = {
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = DataModel
 and Data:
@@ -213,7 +214,7 @@ and Data:
       src: string option;
       expr: TYPES.expr;
       children: string option; (* TODO make this a more complex type *)
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Data
 and Assign:
@@ -222,14 +223,14 @@ and Assign:
       location: TYPES.expr;
       expr: TYPES.expr;
       children: string option; (* TODO make this a more complex type *)
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Assign
 and DoneData:
   sig
     type t = {
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = DoneData
 and Content:
@@ -237,7 +238,7 @@ and Content:
     type t = {
       expr: TYPES.expr;
       children: string option; (* TODO make this a more complex type *)
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Content
 and Param:
@@ -246,7 +247,7 @@ and Param:
       name: string option;
       expr: TYPES.expr;
       location: TYPES.expr;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Param
 and Script:
@@ -254,7 +255,7 @@ and Script:
     type t = {
       src: string option;
       children: string option;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Script
 and Send:
@@ -267,14 +268,14 @@ and Send:
       delay: TYPES.expr;
       namelist: TYPES.expr list;
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Send
 and Cancel:
   sig
     type t = {
       sendid: TYPES.expr;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Cancel
 and Invoke:
@@ -286,14 +287,14 @@ and Invoke:
       namelist: TYPES.expr list;
       autoforward: bool option;
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Invoke
 and Finalize:
   sig
     type t = {
       children: TYPES.statechart_el list;
-      line: int option;
+      loc: TYPES.loc option;
     }
   end = Finalize
 

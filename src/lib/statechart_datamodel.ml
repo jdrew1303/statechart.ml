@@ -1,13 +1,22 @@
+open Statechart_t
+
 type result = Program of Statechart_executable.expression
-            | Error of (int * string) list
+            | Error of (loc * string) list
 
 type parser = string -> result
 
-open Statechart_t
+let default_loc = ((0, 0), (0, 0))
 
-let push_error errors baseline lm =
-  let line, message = lm in
-  errors := ((baseline + line - 1), message) :: !errors
+let shift_loc base loc =
+  let line, col = base in
+  let l, c = loc in
+  line + l - 1, col + c - 1
+
+let push_error errors baseloc lm =
+  let start, finish = baseloc in
+  let (s, f), message = lm in
+  let loc = (shift_loc start s), (shift_loc finish f) in
+  errors := (loc, message) :: !errors
 
 let get_option opt default =
   match opt with
@@ -15,13 +24,13 @@ let get_option opt default =
   | None -> default
 
 let select_datamodel doc datamodels =
-  let line = get_option doc.Document.line 0 in
+  let loc = get_option doc.Document.loc default_loc in
   match doc.Document.datamodel with
   | None ->
-    fun _ -> Error [(line, "The datamodel attribute was not specified")]
+    fun _ -> Error [(loc, "The datamodel attribute was not specified")]
   | Some dm ->
     let rec find i =
-      if i < 0 then fun _ -> Error [(line, "Unsupported datamodel: " ^ dm)]
+      if i < 0 then fun _ -> Error [(loc, "Unsupported datamodel: " ^ dm)]
       else (
         match Array.get datamodels i with
         | n, parser when n == dm -> parser
@@ -30,13 +39,13 @@ let select_datamodel doc datamodels =
     in
     find ((Array.length datamodels) - 1)
 
-let parse_expr dm errors line expr =
+let parse_expr dm errors loc expr =
   match expr with
   | Expr s -> (
     match dm s with
     | Program expr -> ExprParsed expr
     | Error errs -> (
-      List.iter (push_error errors line) errs;
+      List.iter (push_error errors loc) errs;
       (* TODO make this a runtime exception instead of unset *)
       ExprUnset
     )
@@ -52,8 +61,8 @@ let rec parse_child dm errors child =
     let children = parse_children dm errors s.Parallel.children in
     Parallel {s with Parallel.children}
   | Transition s ->
-    let line = get_option s.Transition.line 1 in
-    let cond = parse_expr dm errors line s.Transition.cond in
+    let loc = get_option s.Transition.loc default_loc in
+    let cond = parse_expr dm errors loc s.Transition.cond in
     let children = parse_children dm errors s.Transition.children in
     Transition {s with Transition.children; cond}
   | Initial s ->
@@ -73,38 +82,38 @@ let rec parse_child dm errors child =
     History {s with History.children}
   | Case s ->
     let children = List.map (fun clause ->
-      let line = get_option clause.CaseClause.line 1 in
-      let cond = parse_expr dm errors line clause.CaseClause.cond in
+      let loc = get_option clause.CaseClause.loc default_loc in
+      let cond = parse_expr dm errors loc clause.CaseClause.cond in
       let children = parse_children dm errors clause.CaseClause.children in
       {clause with CaseClause.children; cond}
     ) s.Case.children in
     Case {s with Case.children}
   | Foreach s ->
-    let line = get_option s.Foreach.line 1 in
-    let array = parse_expr dm errors line s.Foreach.array in
-    let item = parse_expr dm errors line s.Foreach.item in
-    let index = parse_expr dm errors line s.Foreach.index in
+    let loc = get_option s.Foreach.loc default_loc in
+    let array = parse_expr dm errors loc s.Foreach.array in
+    let item = parse_expr dm errors loc s.Foreach.item in
+    let index = parse_expr dm errors loc s.Foreach.index in
     let children = parse_children dm errors s.Foreach.children in
     Foreach {s with Foreach.children; array; item; index}
   | Log s ->
-    let line = get_option s.Log.line 1 in
-    let expr = parse_expr dm errors line s.Log.expr in
+    let loc = get_option s.Log.loc default_loc in
+    let expr = parse_expr dm errors loc s.Log.expr in
     Log {s with Log.expr}
   | DataModel s ->
     let children = parse_children dm errors s.DataModel.children in
     DataModel {s with DataModel.children}
   | Data s ->
-    let line = get_option s.Data.line 1 in
-    let expr = parse_expr dm errors line s.Data.expr in
+    let loc = get_option s.Data.loc default_loc in
+    let expr = parse_expr dm errors loc s.Data.expr in
     (* TODO id? *)
     (* TODO src *)
     (* TODO *)
     let children = s.Data.children in
     Data {s with Data.children; expr}
   | Assign s ->
-    let line = get_option s.Assign.line 1 in
-    let location = parse_expr dm errors line s.Assign.location in
-    let expr = parse_expr dm errors line s.Assign.expr in
+    let loc = get_option s.Assign.loc default_loc in
+    let location = parse_expr dm errors loc s.Assign.location in
+    let expr = parse_expr dm errors loc s.Assign.expr in
     (* TODO *)
     let children = s.Assign.children in
     Assign {s with Assign.children; location; expr}
@@ -112,37 +121,37 @@ let rec parse_child dm errors child =
     let children = parse_children dm errors s.DoneData.children in
     DoneData {s with DoneData.children}
   | Content s ->
-    let line = get_option s.Content.line 1 in
-    let expr = parse_expr dm errors line s.Content.expr in
+    let loc = get_option s.Content.loc default_loc in
+    let expr = parse_expr dm errors loc s.Content.expr in
     (* TODO *)
     let children = s.Content.children in
     Content {s with Content.children; expr}
   | Param s ->
-    let line = get_option s.Param.line 1 in
-    let location = parse_expr dm errors line s.Param.location in
-    let expr = parse_expr dm errors line s.Param.expr in
+    let loc = get_option s.Param.loc default_loc in
+    let location = parse_expr dm errors loc s.Param.location in
+    let expr = parse_expr dm errors loc s.Param.expr in
     Param {s with Param.location; expr}
   (* TODO script *)
   | Send s ->
-    let line = get_option s.Send.line 1 in
-    let event = parse_expr dm errors line s.Send.event in
-    let target = parse_expr dm errors line s.Send.target in
-    let t = parse_expr dm errors line s.Send.t in
-    let id = parse_expr dm errors line s.Send.id in
-    let delay = parse_expr dm errors line s.Send.delay in
-    let namelist = List.map (parse_expr dm errors line) s.Send.namelist in
+    let loc = get_option s.Send.loc default_loc in
+    let event = parse_expr dm errors loc s.Send.event in
+    let target = parse_expr dm errors loc s.Send.target in
+    let t = parse_expr dm errors loc s.Send.t in
+    let id = parse_expr dm errors loc s.Send.id in
+    let delay = parse_expr dm errors loc s.Send.delay in
+    let namelist = List.map (parse_expr dm errors loc) s.Send.namelist in
     let children = parse_children dm errors s.Send.children in
     Send {s with Send.event; target; t; id; delay; namelist; children}
   | Cancel s ->
-    let line = get_option s.Cancel.line 1 in
-    let sendid = parse_expr dm errors line s.Cancel.sendid in
+    let loc = get_option s.Cancel.loc default_loc in
+    let sendid = parse_expr dm errors loc s.Cancel.sendid in
     Cancel {s with Cancel.sendid}
   | Invoke s ->
-    let line = get_option s.Invoke.line 1 in
-    let t = parse_expr dm errors line s.Invoke.t in
-    let src = parse_expr dm errors line s.Invoke.src in
-    let id = parse_expr dm errors line s.Invoke.id in
-    let namelist = List.map (parse_expr dm errors line) s.Invoke.namelist in
+    let loc = get_option s.Invoke.loc default_loc in
+    let t = parse_expr dm errors loc s.Invoke.t in
+    let src = parse_expr dm errors loc s.Invoke.src in
+    let id = parse_expr dm errors loc s.Invoke.id in
+    let namelist = List.map (parse_expr dm errors loc) s.Invoke.namelist in
     let children = parse_children dm errors s.Invoke.children in
     Invoke {s with Invoke.t; src; id; namelist; children}
   | Finalize s ->

@@ -17,7 +17,7 @@ let handle_result res =
 let compile src =
   src
   |> open_in_bin
-  |> from_channel
+  |> of_channel
   |> handle_result;
   `Ok true
 

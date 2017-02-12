@@ -14,5 +14,8 @@
   "scripts": {
     "build": "bsb",
     "watch": "bsb -w"
+  },
+  "dependencies": {
+    "parse5": "^3.0.1"
   }
 }
