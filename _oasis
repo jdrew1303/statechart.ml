@@ -10,7 +10,7 @@ Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
 XOCamlbuildPluginTags: package(js_of_ocaml.ocamlbuild)
 OCamlVersion: >= 4.01
-AlphaFeatures: ocamlbuild_more_args, compiled_setup_ml
+AlphaFeatures: ocamlbuild_more_args
 Synopsis:    Statechart implementation for OCaml
 Description:
    TODO
@@ -74,6 +74,7 @@ Executable "statechart_js"
                 js_of_ocaml,
                 js_of_ocaml.ppx
   CompiledObject: byte
+  ByteOpt: -g -bin-annot -keep-locs -linkall -alias-deps
 
 Document api
   Title:                Documentation and API reference

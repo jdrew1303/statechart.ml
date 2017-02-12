@@ -10,7 +10,7 @@ build: [
   ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
   ["ocaml" "setup.ml" "-build"]
 ]
-install: ["ocaml" "setup.ml" "-install"]
+install: ["ocaml" "setup.ml" "-reinstall"]
 remove: [
   ["ocaml" "setup.ml" "-uninstall"]
 ]

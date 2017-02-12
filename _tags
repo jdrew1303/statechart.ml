@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: b8d693cff067ae3b073a8c2955675f86)
+# DO NOT EDIT (digest: 26e3c3052174d01bbeec52b861df8cb2)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -47,6 +47,8 @@ true: annot, bin_annot
 <src/scxml_cli/*.ml{,i,y}>: use_statechart_ecmascript
 <src/scxml_cli/*.ml{,i,y}>: use_statechart_scxml
 # Executable statechart_js
+"src/binding/js_of_ocaml/statechart_js.byte": oasis_executable_statechart_js_byte
+<src/binding/js_of_ocaml/*.ml{,i,y}>: oasis_executable_statechart_js_byte
 "src/binding/js_of_ocaml/statechart_js.byte": package(flow_parser)
 "src/binding/js_of_ocaml/statechart_js.byte": package(js_of_ocaml)
 "src/binding/js_of_ocaml/statechart_js.byte": package(js_of_ocaml.ppx)

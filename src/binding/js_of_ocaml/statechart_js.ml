@@ -38,7 +38,7 @@ let _ =
   method validate = validate
   method translate = translate
   val scxml = (object%js
-    method fromString str =
+    method parse str =
       str
       |> Js.to_string
       |> Statechart_scxml.from_string
@@ -47,14 +47,14 @@ let _ =
   val format = (object%js
     method decode str =
       str
-      |> Js.to_string
+      |> Js.to_bytestring
       |> Statechart_format_runtime.init_from_string
       |> Statechart_format.parse_document
     method encode doc =
       doc
       |> Statechart_format.gen_document
       |> Statechart_format_runtime.to_string
-      |> Js.string
+      |> Js.bytestring
   end)
 
   method compile doc datamodels =

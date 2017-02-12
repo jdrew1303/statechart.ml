@@ -1,4 +1,3 @@
-open Markup
 open Statechart_t
 
 module Prop = struct
@@ -354,23 +353,38 @@ let unwrap root =
 
 let from_signals signals =
   signals
-  |> tree
+  |> Markup.tree
     ~text:(fun ss -> Text (String.concat "" ss))
     ~element:(parse_element None)
   |> unwrap
 
 let from_stream stream =
-  let parser = parse_xml stream in
-  parser
+  stream
+  |> Markup.parse_xml
+    ~encoding:Markup.Encoding.utf_8
   |> Markup.signals
-  |> tree
+  |> Markup.drain;
+  (* |> tree
     ~text:(fun ss -> Text (String.concat "" ss))
     ~element:(fun n p c ->
       let line, _col = Markup.location parser in
       parse_element (Some line) n p c
     )
-  |> unwrap
+  |> unwrap *)
+  Some {
+    Document.name=Some "foo";
+    initial=[];
+    datamodel=None;
+    binding=`early;
+    children=[];
+    line=None;
+  }
 
-let from_string str = from_stream (string str)
+let from_string str =
+  from_stream (Markup.string str)
 
-let from_channel chn = from_stream (channel chn)
+let from_buffer buffer =
+  from_stream (Markup.buffer buffer)
+
+let from_channel chn =
+  from_stream (Markup.channel chn)
