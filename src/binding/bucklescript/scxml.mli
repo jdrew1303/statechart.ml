@@ -1,1 +1,1 @@
-val of_string : string -> Statechart_t.document option
+val parse : string -> Statechart_t.document Js.Null.t

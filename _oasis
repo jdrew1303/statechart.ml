@@ -25,6 +25,7 @@ Library statechart
                 Statechart_interpreter,
                 Statechart_t,
                 Statechart_translator,
+                Statechart_translator_predicates,
                 Statechart_validator
 
 Library statechart_ecmascript
@@ -59,6 +60,7 @@ Executable statechart-scxml
   MainIs:       scxml.ml
   BuildDepends: statechart,
                 statechart.ecmascript,
+                statechart.format,
                 statechart.scxml,
                 cmdliner (>= 0.9)
   CompiledObject: best

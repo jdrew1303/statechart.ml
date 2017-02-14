@@ -24,9 +24,9 @@ let w3_test path description () =
   match Statechart_scxml.of_channel channel with
   | None -> ()
   | Some document -> (
-    let document, dm_errors = Statechart_datamodel.parse document datamodels in
-    let errors, warnings = Statechart_validator.validate document in
-    let document = Statechart_translator.translate document in
+    let document, dm_errors = Statechart.parse document datamodels in
+    let _errors, _warnings = Statechart.validate document in
+    let document = Statechart.translate document in
     let iolist = Statechart_format.gen_document document in
     let out = open_out (path ^ ".protobin") in
     Statechart_format_runtime.to_channel out iolist;

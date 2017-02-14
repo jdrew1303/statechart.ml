@@ -62,10 +62,10 @@ let parse_string_list str =
 let format_attr ns key value =
   (ns, key), value
 
-let format_attrs : attrs -> Statechart_scxml_parser.prop array = [%bs.raw{|
-  function(attrs) {
+let format_attrs : 'a -> attrs -> Statechart_scxml_parser.prop array = [%bs.raw{|
+  function(format, attrs) {
     return attrs.map(function(attr) {
-      return format_attr("", attr.name, attr.value);
+      return format("", attr.name, attr.value);
     });
   }
 |}]
@@ -74,7 +74,7 @@ let parse_children children =
   List.map (fun child ->
     let name = child.name in
     let ns = child.ns in
-    let attrs = format_attrs child.attrs in
+    let attrs = format_attrs format_attr child.attrs in
     let attrs = Array.to_list attrs in
     let children = child.parsed in
     let loc = Some (child.open_loc, child.close_loc) in
@@ -87,7 +87,7 @@ let pick_loc op last =
   | (a, _), (b, _) when a > b -> op
   | _ -> last
 
-let of_string str =
+let parse str =
   let dom = [||] in
   let tag_stack = [||] in
   let ns_stack = [||] in
@@ -148,6 +148,9 @@ let of_string str =
 
   endTag "" Js.undefined;
 
-  match parse_children dom with
+  let res = (match parse_children dom with
   | hd :: _ -> Statechart_scxml_parser.unwrap (Some hd)
-  | _ -> Statechart_scxml_parser.unwrap None
+  | _ -> Statechart_scxml_parser.unwrap None) in
+  match res with
+  | Some doc -> Js.Null.return doc
+  | _ -> Js.null

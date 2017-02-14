@@ -29,8 +29,7 @@ setup.log
 *.log
 
 # js package
-/js/lib
-/js/src
+/js/package
 
 # test data
 /test/w3c

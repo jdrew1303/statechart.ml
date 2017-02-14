@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: e0812c8dac56ab6da10d826c5c081ee5)
+# DO NOT EDIT (digest: 7d912dc3f2f4141a0f9f7ffae3370bfb)
 Statechart
 Statechart_bitset
 Statechart_datamodel
@@ -7,5 +7,6 @@ Statechart_executable
 Statechart_interpreter
 Statechart_t
 Statechart_translator
+Statechart_translator_predicates
 Statechart_validator
 # OASIS_STOP

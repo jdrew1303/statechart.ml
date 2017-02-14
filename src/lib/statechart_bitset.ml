@@ -6,6 +6,9 @@ let bucket_size = 16
 let bucket_addr = 4
 let bucket_mask = bucket_size - 1
 
+let length a =
+  Array.length(a) * bucket_size
+
 let make size =
   Array.make (size / bucket_size + 1) 0
 
@@ -16,6 +19,14 @@ let set a idx =
   let a_idx = idx lsr bucket_addr in
   a.(a_idx) <- a.(a_idx) lor (1 lsl (idx land bucket_mask));
   ()
+
+let init fn size =
+  let arr = make size in
+  for i = 0 to size - 1 do
+    if fn i
+    then set arr i
+  done;
+  arr
 
 let clear a idx =
   let a_idx = idx lsr bucket_addr in
@@ -86,25 +97,25 @@ let iter_right fn a =
 
 let fold_left fn acc a =
   let acc = ref acc in
-  for i = 0 to (Array.length(a) - 1) do
-    let v = a.(i) in
-    for j = 0 to bucket_mask do
-      if v land (1 lsl (j land bucket_mask)) > 0
-      then acc := fn !acc ((i * bucket_size) + j)
-    done
-  done;
+  iter_left (fun i ->
+    acc := fn !acc i
+  ) a;
   !acc
 
 let fold_right fn acc a =
   let acc = ref acc in
-  for i = (Array.length(a) - 1) downto 0 do
-    let v = a.(i) in
-    for j = bucket_mask downto 0 do
-      if v land (1 lsl (j land bucket_mask)) > 0
-      then acc := fn !acc ((i * bucket_size) + j)
-    done
-  done;
+  iter_right (fun i ->
+    acc := fn !acc i
+  ) a;
   !acc
+
+let filter fn a =
+  let acc = copy_clear a in
+  iter_right (fun i ->
+    if fn i
+    then set acc i
+  ) a;
+  acc
 
 let first a =
   let n = Array.length(a) * bucket_size in
@@ -115,6 +126,16 @@ let first a =
     else search (i + 1)
   ) in
   search 0
+
+let last a =
+  let n = Array.length(a) * bucket_size in
+  let rec search i =
+    if i < 0 then None else (
+    if get a i
+    then Some i
+    else search (i - 1)
+  ) in
+  search (n - 1)
 
 let of_list l =
   Array.of_list l
@@ -128,7 +149,7 @@ let to_idx_array a =
   ) [] a in
   Array.of_list l
 
-let of_idx_array a size =
+let of_idx_array size a =
   let bs = make size in
   Array.iter (set bs) a;
   bs

@@ -4,6 +4,7 @@
   "sources" : [
     {"dir": "src/binding/bucklescript", "type": "lib"},
     {"dir": "src/lib", "type": "lib"},
+    {"dir": "src/format", "type": "lib"},
   ],
   "generate-merlin": false
 }

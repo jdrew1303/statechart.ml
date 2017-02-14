@@ -1,6 +1,6 @@
 open Statechart_interpreter
 
-module Engine = Make(struct
+module Interpreter = Make(struct
   (* This is just a foreign empty js object *)
   type datamodel
   type executable = datamodel -> datamodel
@@ -15,4 +15,4 @@ module Engine = Make(struct
     fun event -> true
 end)
 
-include Engine
+include Interpreter

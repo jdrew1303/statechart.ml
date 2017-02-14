@@ -46,5 +46,8 @@ test/w3c: test/w3c.tar.gz
 test/w3c.tar.gz:
 	@wget -P test https://github.com/statechart/scxml-test-suite/releases/download/1.0/w3c.tar.gz
 
-js-build:
+js-package:
 	@yarn build
+	@./node_modules/.bin/rollup -c js/rollup.config.js
+	@./node_modules/.bin/rollup -c js/rollup.interpreter.js
+	@cp package.json js/package

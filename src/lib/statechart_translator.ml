@@ -1,3 +1,5 @@
+open Statechart_translator_predicates
+
 module Src = Statechart_t
 module Tgt = Statechart_executable
 module Bitset = Statechart_bitset
@@ -104,6 +106,7 @@ let flatten document =
   let state_idx = ref 0 in
   let state_map = ref StringMap.empty in
   let state_completions = ref IntMap.empty in
+  let state_descendants = ref IntMap.empty in
   let transitions = ref IntMap.empty in
   let transition_idx = ref 0 in
   let transition_targets = ref IntMap.empty in
@@ -119,7 +122,7 @@ let flatten document =
   let rec translate_document () =
     let idx = get_next state_idx in
     let children, on_enter, on_exit, transitions, invocations =
-      translate_children document.Src.Document.children [idx] in
+      translate_children document.Src.Document.children idx [] in
     set_mut state_completions idx document.Src.Document.initial;
     set_mut states idx {
       Tgt.State.t=`compound;
@@ -143,7 +146,7 @@ let flatten document =
   and translate_state state ancestors =
     let idx = get_next state_idx in
     let children, on_enter, on_exit, transitions, invocations =
-      translate_children state.Src.State.children (idx :: ancestors) in
+      translate_children state.Src.State.children idx ancestors in
     maybe_map_state idx state.Src.State.id;
     set_mut state_completions idx state.Src.State.initial;
     set_mut states idx {
@@ -171,7 +174,7 @@ let flatten document =
   and translate_parallel state ancestors =
     let idx = get_next state_idx in
     let children, on_enter, on_exit, transitions, invocations =
-      translate_children state.Src.Parallel.children (idx :: ancestors) in
+      translate_children state.Src.Parallel.children idx ancestors in
     maybe_map_state idx state.Src.Parallel.id;
     set_mut states idx {
       Tgt.State.t=`parallel;
@@ -222,7 +225,7 @@ let flatten document =
   and translate_initial state ancestors =
     let idx = get_next state_idx in
     let children, on_enter, on_exit, transitions, invocations =
-      translate_children state.Src.Initial.children (idx :: ancestors) in
+      translate_children state.Src.Initial.children idx ancestors in
     set_mut states idx {
       Tgt.State.t=`initial;
       idx;
@@ -246,7 +249,7 @@ let flatten document =
   and translate_final state ancestors =
     let idx = get_next state_idx in
     let children, on_enter, on_exit, transitions, invocations =
-      translate_children state.Src.Final.children (idx :: ancestors) in
+      translate_children state.Src.Final.children idx ancestors in
     maybe_map_state idx state.Src.Final.id;
     set_mut states idx {
       Tgt.State.t=`parallel;
@@ -271,7 +274,7 @@ let flatten document =
   and translate_history state ancestors =
     let idx = get_next state_idx in
     let children, on_enter, on_exit, transitions, invocations =
-      translate_children state.Src.History.children (idx :: ancestors) in
+      translate_children state.Src.History.children idx ancestors in
     maybe_map_state idx state.Src.History.id;
     set_mut states idx {
       Tgt.State.t=(match state.Src.History.t with
@@ -311,7 +314,8 @@ let flatten document =
     (* TODO invoke *)
     | _ -> Pass
 
-  and translate_children children ancestors =
+  and translate_children children parent ancestors =
+    let ancestors = parent :: ancestors in
     let idxs = ref [||] in
     let on_enter = ref [||] in
     let on_exit = ref [||] in
@@ -326,7 +330,15 @@ let flatten document =
       | Invoke i -> append_mut_array invocations [|i|];
       | Pass -> ()
     ) children;
-    !idxs, !on_enter, !on_exit, !transitions, !invocations
+    let idxs = !idxs in
+    let sd = !state_descendants in
+    let desc = Array.fold_left (fun acc i ->
+      match maybe_find sd i with
+      | None -> acc
+      | Some d -> Array.append acc d
+    ) idxs idxs in
+    state_descendants := IntMap.add parent desc sd;
+    idxs, !on_enter, !on_exit, !transitions, !invocations
 
   and translate_raise raise =
     match raise.Src.Raise.event with
@@ -409,34 +421,42 @@ let flatten document =
 
   let states = !states in
   let state_map = !state_map in
-  let state_count = IntMap.cardinal states in
+  let state_bitset = Bitset.of_idx_array (IntMap.cardinal states) in
   let state_completions = !state_completions in
+  let descendants = map_to_array !state_descendants state_bitset in
+
   let states = map_to_array states (fun s ->
     let completion = get_completion s state_completions state_map states in
     let children = s.Tgt.State.children in
     {s with
-      Tgt.State.completion=Bitset.of_idx_array completion state_count;
-      ancestors=Bitset.of_idx_array s.Tgt.State.ancestors state_count;
-      children=Bitset.of_idx_array children state_count;
+      Tgt.State.completion=state_bitset completion;
+      ancestors=state_bitset s.Tgt.State.ancestors;
+      children=state_bitset children;
       has_history=has_history children states;
     }
   ) in
 
   let transitions = !transitions in
-  let transition_count = IntMap.cardinal transitions in
   let transition_targets = !transition_targets in
   let transitions = map_to_array transitions (fun t ->
     let targets = IntMap.find t.Tgt.Transition.idx transition_targets in
-    (* TODO *)
-    let exits = [||] in
-    (* TODO *)
-    let conflicts = [||] in
+    let target_ids = resolve_list state_map targets in
+    let t = normalize_source states t in
     {t with
-      Tgt.Transition.targets=Bitset.of_idx_array (resolve_list state_map targets) state_count;
-      conflicts=Bitset.of_idx_array conflicts transition_count;
-      exits=Bitset.of_idx_array exits transition_count;
+      Tgt.Transition.targets=state_bitset target_ids;
+      exits=get_exit_set descendants states t target_ids;
     }
   ) in
+
+  (* compute the conflicts *)
+  let transition_count = Array.length transitions in
+  let transitions = Array.map (fun t1 ->
+    let conflicts = Bitset.init (fun i ->
+      let t2 = Array.get transitions i in
+      has_conflict descendants t1 t2
+    ) transition_count in
+    {t1 with Tgt.Transition.conflicts}
+  ) transitions in
 
   states, transitions
 

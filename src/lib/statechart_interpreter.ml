@@ -20,10 +20,10 @@ module type Interpreter = sig
   val load : Statechart_executable.document -> document
 
   val start : document -> datamodel -> t
-  val handle_event : document -> t -> event -> t
-  val synchronize : document -> t -> t
-  val invoke : document -> t -> t
-  val stop : document -> t -> t
+  val handle_event : t -> document -> event -> t
+  val synchronize : t -> document -> t
+  val invoke : t -> document -> t
+  val stop : t -> document -> t
 
   val get_configuration : t -> int array
   val get_configuration_names : t -> document -> string array
@@ -418,17 +418,17 @@ module Make(Eng : Engine) = struct
     let exit_set = empty in
     establish_entryset doc engine target_set trans_set exit_set
 
-  let handle_event doc engine event =
+  let handle_event engine doc event =
     select_transitions doc engine (Some event)
 
-  let synchronize doc engine =
+  let synchronize engine doc =
     select_transitions doc engine None
 
-  let invoke doc engine =
+  let invoke engine doc =
     (* TODO un/invoke all of the enabled states *)
     engine
 
-  let stop doc engine =
+  let stop engine doc =
     let states = doc.Document.states in
     let executions = Array.fold_right (fun state acc ->
       if Bitset.get engine.configuration state.State.idx

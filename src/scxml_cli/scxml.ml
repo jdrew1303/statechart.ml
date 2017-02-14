@@ -2,17 +2,19 @@ open Cmdliner
 open Statechart_scxml
 open Statechart_t
 
-let datamodels = [
-    (* "ecmascript", Statechart_ecmascript.parse; *)
-  ]
+let datamodels = [|
+    "ecmascript", Statechart_ecmascript.parse;
+  |]
 
 let handle_result res =
   match res with
   | Some doc ->
-    (* let doc = analyze doc datamodels in *)
-    (* dump_document doc *)
-    ()
-  | None -> print_endline "Invalid document"
+    let document, dm_errors = Statechart.parse doc datamodels in
+    let _errors, _warnings = Statechart_validator.validate document in
+    let document = Statechart.translate document in
+    let iolist = Statechart_format.gen_document document in
+    Statechart_format_runtime.to_channel stdout iolist;
+  | None -> prerr_endline "Invalid document"
 
 let compile src =
   src

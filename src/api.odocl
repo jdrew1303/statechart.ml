@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 4c5eb39f5b0614969535676f5ccf4238)
+# DO NOT EDIT (digest: 60c611ebb9cb0acdc0f23c4494b06ed0)
 lib/Statechart
 lib/Statechart_bitset
 lib/Statechart_datamodel
@@ -7,6 +7,7 @@ lib/Statechart_executable
 lib/Statechart_interpreter
 lib/Statechart_t
 lib/Statechart_translator
+lib/Statechart_translator_predicates
 lib/Statechart_validator
 format/Statechart_format
 format/Statechart_format_runtime

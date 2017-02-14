@@ -1,7 +1,9 @@
 
 type t = int array
 
+val length : t -> int
 val make : int -> t
+val init : (int -> bool) -> int -> t
 val get : t -> int -> bool
 val set : t -> int -> unit
 val clear : t -> int -> unit
@@ -18,9 +20,11 @@ val iter_left : (int -> unit) -> t -> unit
 val iter_right : (int -> unit) -> t -> unit
 val fold_left : ('a -> int -> 'a) -> 'a -> t -> 'a
 val fold_right : ('a -> int -> 'a) -> 'a -> t -> 'a
+val filter : (int -> bool) -> t -> t
 val first : t -> int option
+val last : t -> int option
 
 val of_list : int list -> t
 val to_list : t -> int list
-val of_idx_array : int array -> int -> t
+val of_idx_array : int -> int array -> t
 val to_idx_array : t -> int array
