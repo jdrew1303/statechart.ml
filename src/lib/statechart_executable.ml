@@ -4,46 +4,33 @@ module rec TYPES:
     type uint = int
     type float = TYPES.float64
     type binary = string
-    type ref = TYPES.uint
-
-    type expression_type = [
-      | `block
-
-      (* datatypes *)
-      | `null
-      | `list
-      | `map
-      | `bool
-      | `int
-      | `float
-      | `string
-
-      (* BIF *)
-      | `raise
-      | `case
-      | `clause
-      | `foreach
-      | `log
-      | `assign
-      | `send
-      | `cancel
-
-      (* unary *)
-
-      (* binary *)
-      | `equal
-      | `not_equal
-    ]
+    type bitset = Statechart_bitset.t
     type content =
       [
         | `string of string
         | `expression of TYPES.expression
         | `document of TYPES.document
       ]
-    type document_binding =
+    type expression_type =
       [
-        | `early
-        | `late
+        | `block
+        | `null
+        | `list
+        | `map
+        | `bool
+        | `int
+        | `float
+        | `string
+        | `raise
+        | `case
+        | `clause
+        | `foreach
+        | `log
+        | `assign
+        | `send
+        | `cancel
+        | `equal
+        | `not_equal
       ]
     type state_type =
       [
@@ -85,9 +72,9 @@ and Expression:
       t: TYPES.expression_type;
       bool_val: bool option;
       int_val: int option;
-      float_val: float option;
+      float_val: TYPES.float option;
       string_val: string option;
-      args: t list;
+      args: TYPES.expression list;
     }
   end = Expression
 and Invoke:
@@ -113,18 +100,18 @@ and State:
   sig
     type t = {
       t: TYPES.state_type;
-      idx: TYPES.ref;
+      idx: TYPES.uint;
       id: string option;
       on_enter: TYPES.expression array;
       on_exit: TYPES.expression array;
       invocations: TYPES.invoke array;
       data: TYPES.expression array;
       donedata: TYPES.expression option;
-      parent: TYPES.ref;
-      children: TYPES.ref array;
-      ancestors: TYPES.ref array;
-      completion: TYPES.ref array;
-      transitions: TYPES.ref array;
+      parent: TYPES.uint;
+      children: TYPES.bitset;
+      ancestors: TYPES.bitset;
+      completion: TYPES.bitset;
+      transitions: TYPES.bitset;
       has_history: bool;
     }
   end = State
@@ -132,14 +119,14 @@ and Transition:
   sig
     type t = {
       t: TYPES.transition_type;
-      idx: int;
-      source: TYPES.ref;
+      idx: TYPES.uint;
+      source: TYPES.uint;
       events: string array;
       condition: TYPES.expression option;
       on_transition: TYPES.expression array;
-      targets: TYPES.ref array;
-      conflicts: TYPES.ref array;
-      exits: TYPES.ref array;
+      targets: TYPES.bitset;
+      conflicts: TYPES.bitset;
+      exits: TYPES.bitset;
     }
   end = Transition
 

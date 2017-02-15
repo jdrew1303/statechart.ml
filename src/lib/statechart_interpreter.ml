@@ -242,15 +242,16 @@ module Make(Eng : Engine) = struct
     t != `history_shallow && t != `history_deep && t != `initial
 
   let enter_states doc engine entry_set =
+    let prev_conf = engine.configuration in
     let initialized = Bitset.copy engine.initialized in
     let engine = {engine with initialized} in
-    Bitset.fold_left (fun engine idx ->
-      let configuration = engine.configuration in
+    let engine = Bitset.fold_left (fun engine idx ->
       let state = resolve doc idx in
-      if Bitset.get configuration idx && is_proper_state state
+      if Bitset.get prev_conf idx && is_proper_state state
       then engine
       else enter_state doc engine state
-    ) engine entry_set
+    ) engine entry_set in
+    {engine with configuration=entry_set}
 
   let establish_entryset doc engine entry_set trans_set exit_set =
     add_entry_ancestors doc entry_set;

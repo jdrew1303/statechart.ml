@@ -1,9 +1,9 @@
 type t = int array
 
 (* Yeah this wastes space... oh well. it's portable *)
-let bucket_size = 16
+let bucket_size = 8
 (* nth power of 2 *)
-let bucket_addr = 4
+let bucket_addr = 3
 let bucket_mask = bucket_size - 1
 
 let length a =
@@ -153,3 +153,15 @@ let of_idx_array size a =
   let bs = make size in
   Array.iter (set bs) a;
   bs
+
+let of_string b =
+  let arr = make (String.length b) in
+  String.iteri (fun i c ->
+    arr.(i) <- Char.code c
+  ) b;
+  arr
+
+let to_string a =
+  String.init (Array.length a) (fun i ->
+    Char.chr (a.(i))
+  )
