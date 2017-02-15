@@ -29,6 +29,7 @@ module rec TYPES:
         | `assign
         | `send
         | `cancel
+        | `is_active
         | `equal
         | `not_equal
       ]

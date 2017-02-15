@@ -44,6 +44,15 @@ Library statechart_format
   Modules:       Statechart_format,
                  Statechart_format_runtime
 
+Library statechart_null
+  Path:          src/null
+  Findlibname:   null
+  FindlibParent: statechart
+  BuildDepends:  statechart
+  Modules:       Statechart_null,
+                 Statechart_null_lexer,
+                 Statechart_null_parser
+
 Library statechart_scxml
   Path:          src/scxml
   Findlibname:   scxml

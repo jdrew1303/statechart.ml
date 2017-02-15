@@ -65,8 +65,9 @@ and parse_expression_type x =
     | 14l -> `assign
     | 15l -> `send
     | 16l -> `cancel
-    | 17l -> `equal
-    | 18l -> `not_equal
+    | 17l -> `is_active
+    | 18l -> `equal
+    | 19l -> `not_equal
     | x -> Piqirun.error_enum_const x
 and packed_parse_expression_type x =
   match Piqirun.int32_of_packed_signed_varint x with
@@ -86,8 +87,9 @@ and packed_parse_expression_type x =
     | 14l -> `assign
     | 15l -> `send
     | 16l -> `cancel
-    | 17l -> `equal
-    | 18l -> `not_equal
+    | 17l -> `is_active
+    | 18l -> `equal
+    | 19l -> `not_equal
     | x -> Piqirun.error_enum_const x
 
 and parse_expression x =
@@ -289,8 +291,9 @@ and gen__expression_type code x =
     | `assign -> 14l
     | `send -> 15l
     | `cancel -> 16l
-    | `equal -> 17l
-    | `not_equal -> 18l
+    | `is_active -> 17l
+    | `equal -> 18l
+    | `not_equal -> 19l
   )
 and packed_gen__expression_type x =
   Piqirun.int32_to_packed_signed_varint (match x with
@@ -310,8 +313,9 @@ and packed_gen__expression_type x =
     | `assign -> 14l
     | `send -> 15l
     | `cancel -> 16l
-    | `equal -> 17l
-    | `not_equal -> 18l
+    | `is_active -> 17l
+    | `equal -> 18l
+    | `not_equal -> 19l
   )
 
 and gen__expression code x =
