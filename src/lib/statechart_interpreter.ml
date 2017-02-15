@@ -107,7 +107,7 @@ module Make(Eng : Engine) = struct
         children: Bitset.t;
         ancestors: Bitset.t;
         completion: Bitset.t;
-        transitions: int array;
+        transitions: Bitset.t;
       }
     end = State
   and Transition:
@@ -154,7 +154,7 @@ module Make(Eng : Engine) = struct
     ()
 
   let add_entry_descendants_initial doc entry_set trans_set state =
-    Array.iter (fun idx ->
+    Bitset.iter_left (fun idx ->
       let transition = resolve_transition doc idx in
       let targets = transition.Transition.targets in
       Bitset.bor entry_set targets;

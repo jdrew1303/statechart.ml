@@ -425,6 +425,10 @@ let flatten document =
   let state_completions = !state_completions in
   let descendants = map_to_array !state_descendants state_bitset in
 
+  let transitions = !transitions in
+  let transition_targets = !transition_targets in
+  let transition_count = IntMap.cardinal transitions in
+
   let states = map_to_array states (fun s ->
     let completion = get_completion s state_completions state_map states in
     let children = s.Tgt.State.children in
@@ -433,11 +437,10 @@ let flatten document =
       ancestors=state_bitset s.Tgt.State.ancestors;
       children=state_bitset children;
       has_history=has_history children states;
+      transitions=Bitset.of_idx_array transition_count s.Tgt.State.transitions;
     }
   ) in
 
-  let transitions = !transitions in
-  let transition_targets = !transition_targets in
   let transitions = map_to_array transitions (fun t ->
     let targets = IntMap.find t.Tgt.Transition.idx transition_targets in
     let target_ids = resolve_list state_map targets in
@@ -449,7 +452,6 @@ let flatten document =
   ) in
 
   (* compute the conflicts *)
-  let transition_count = Array.length transitions in
   let transitions = Array.map (fun t1 ->
     let conflicts = Bitset.init (fun i ->
       let t2 = Array.get transitions i in
