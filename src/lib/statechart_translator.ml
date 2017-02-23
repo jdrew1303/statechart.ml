@@ -72,7 +72,7 @@ let has_history children state_map =
   in
   find 0
 
-let get_history_completion state completions =
+let get_history_completion state states =
   (* TODO *)
   [||]
 
@@ -91,14 +91,17 @@ let find_initial states children =
     in
     find 0
 
-let get_completion state completions state_map states =
+let get_completion state completions state_map states descendants =
   match state with
-  | {Tgt.State.t=t} when t == `history_deep || t == `history_shallow -> get_history_completion state completions
+  (* TODO filter history children *)
+  | {Tgt.State.t=`history_deep; idx; children} ->
+    Array.append children (Bitset.to_idx_array (Array.get descendants idx))
+  | {Tgt.State.t=`history_shallow; children} -> children
   | {Tgt.State.t=`parallel; children} -> children
   | {Tgt.State.idx=idx} -> (
     match maybe_find completions idx with
-    | None -> find_initial states state.Tgt.State.children
-    | Some initial -> resolve_list state_map initial
+    | Some initial when (initial != []) -> resolve_list state_map initial
+    | _ -> find_initial states state.Tgt.State.children
   )
 
 let flatten document =
@@ -252,7 +255,7 @@ let flatten document =
       translate_children state.Src.Final.children idx ancestors in
     maybe_map_state idx state.Src.Final.id;
     set_mut states idx {
-      Tgt.State.t=`parallel;
+      Tgt.State.t=`final;
       idx;
       id=state.Src.Final.id;
       on_enter;
@@ -294,7 +297,7 @@ let flatten document =
       ancestors=Array.of_list ancestors;
       completion=[||];
       transitions;
-      has_history=false;
+      has_history=true;
     };
     idx
 
@@ -314,6 +317,22 @@ let flatten document =
     (* TODO invoke *)
     | _ -> Pass
 
+  and sort_children a b =
+    match a, b with
+    | Src.Initial _, Src.Initial _ -> 0
+    | Src.Initial _, _ -> -1
+    | _, Src.Initial _ -> 1
+    | Src.History {Src.History.t=a_t}, Src.History {Src.History.t=b_t} -> (
+      match a_t, b_t with
+      | `deep, `deep -> 0
+      | `shallow, `shallow -> 0
+      | `deep, _ -> -1
+      | `shallow, _ -> 1
+    )
+    | Src.History _, _ -> -1
+    | _, Src.History _ -> 1
+    | _, _ -> 0
+
   and translate_children children parent ancestors =
     let ancestors = parent :: ancestors in
     let idxs = ref [||] in
@@ -321,6 +340,7 @@ let flatten document =
     let on_exit = ref [||] in
     let transitions = ref [||] in
     let invocations = ref [||] in
+    let children = List.stable_sort sort_children children in
     List.iter (fun child ->
       match translate_child child ancestors with
       | State idx -> append_mut_array idxs [|idx|];
@@ -430,13 +450,13 @@ let flatten document =
   let transition_count = IntMap.cardinal transitions in
 
   let states = map_to_array states (fun s ->
-    let completion = get_completion s state_completions state_map states in
+    let completion = get_completion s state_completions state_map states descendants in
     let children = s.Tgt.State.children in
     {s with
       Tgt.State.completion=state_bitset completion;
       ancestors=state_bitset s.Tgt.State.ancestors;
       children=state_bitset children;
-      has_history=has_history children states;
+      has_history=s.Tgt.State.has_history || (has_history children states);
       transitions=Bitset.of_idx_array transition_count s.Tgt.State.transitions;
     }
   ) in

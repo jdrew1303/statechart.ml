@@ -141,8 +141,8 @@ let parse_on_exit loc props children =
 
 let parse_history_type t =
   match t with
-  | Some "internal" -> `shallow
-  | _ -> `deep
+  | Some "deep" -> `deep
+  | _ -> `shallow
 
 let parse_history loc props children =
   History {

@@ -10,7 +10,10 @@ let length a =
   Array.length(a) * bucket_size
 
 let make size =
-  Array.make (size / bucket_size + 1) 0
+  let pad = match size land bucket_mask with
+  | 0 -> 0
+  | _ -> 1 in
+  Array.make (size / bucket_size + pad) 0
 
 let get a idx =
   (a.(idx lsr bucket_addr) land (1 lsl (idx land bucket_mask))) != 0
@@ -155,7 +158,7 @@ let of_idx_array size a =
   bs
 
 let of_string b =
-  let arr = make (String.length b) in
+  let arr = Array.make (String.length b) 0 in
   String.iteri (fun i c ->
     arr.(i) <- Char.code c
   ) b;

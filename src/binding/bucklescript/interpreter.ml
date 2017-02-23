@@ -6,12 +6,17 @@ module Interpreter = Make(struct
   type executable = datamodel -> datamodel
 
   let load_executable expr =
-    fun datamodel -> datamodel
+    (* Js.log expr; *)
+    fun datamodel ->
+      datamodel
 
   let load_query expr =
-    fun datamodel -> true
+    (* Js.log expr; *)
+    fun datamodel ->
+      true
 
   let load_event_match event_list =
+    (* Js.log event_list; *)
     fun event -> true
 end)
 
