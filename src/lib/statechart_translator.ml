@@ -17,7 +17,7 @@ end)
 type child_type = State of int
                 | OnEntry of Tgt.expression array
                 | OnExit of Tgt.expression array
-                | Transition of int
+                | Transition of (unit -> int)
                 | Invoke of Tgt.invoke
                 | Pass
 
@@ -305,7 +305,7 @@ let flatten document =
     match child with
     | Src.State c -> State (translate_state c ancestors)
     | Src.Parallel c -> State (translate_parallel c ancestors)
-    | Src.Transition c -> Transition (translate_transition c ancestors)
+    | Src.Transition c -> Transition (fun () -> translate_transition c ancestors)
     | Src.Initial c -> State (translate_initial c ancestors)
     | Src.Final c -> State (translate_final c ancestors)
     | Src.OnEntry c -> OnEntry (translate_executables c.Src.OnEntry.children)
@@ -333,6 +333,15 @@ let flatten document =
     | _, Src.History _ -> 1
     | _, _ -> 0
 
+  and save_descendants parent children =
+    let sd = !state_descendants in
+    let desc = Array.fold_left (fun acc i ->
+      match maybe_find sd i with
+      | None -> acc
+      | Some d -> Array.append acc d
+    ) children children in
+    state_descendants := IntMap.add parent desc sd
+
   and translate_children children parent ancestors =
     let ancestors = parent :: ancestors in
     let idxs = ref [||] in
@@ -351,14 +360,10 @@ let flatten document =
       | Pass -> ()
     ) children;
     let idxs = !idxs in
-    let sd = !state_descendants in
-    let desc = Array.fold_left (fun acc i ->
-      match maybe_find sd i with
-      | None -> acc
-      | Some d -> Array.append acc d
-    ) idxs idxs in
-    state_descendants := IntMap.add parent desc sd;
-    idxs, !on_enter, !on_exit, !transitions, !invocations
+    save_descendants parent idxs;
+    (* post evaluate so we get the deepest transitions first *)
+    let transitions = Array.map (fun t -> t ()) !transitions in
+    idxs, !on_enter, !on_exit, transitions, !invocations
 
   and translate_raise raise =
     match raise.Src.Raise.event with
@@ -464,7 +469,7 @@ let flatten document =
   let transitions = map_to_array transitions (fun t ->
     let targets = IntMap.find t.Tgt.Transition.idx transition_targets in
     let target_ids = resolve_list state_map targets in
-    let t = normalize_source states t in
+    let t = resolve_transition_type states t in
     {t with
       Tgt.Transition.targets=state_bitset target_ids;
       exits=get_exit_set descendants states t target_ids;
@@ -475,7 +480,7 @@ let flatten document =
   let transitions = Array.map (fun t1 ->
     let conflicts = Bitset.init (fun i ->
       let t2 = Array.get transitions i in
-      has_conflict descendants t1 t2
+      has_conflict descendants states t1 t2
     ) transition_count in
     {t1 with Tgt.Transition.conflicts}
   ) transitions in

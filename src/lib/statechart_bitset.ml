@@ -38,7 +38,7 @@ let clear a idx =
 
 let has_and a b =
   let rec search i =
-    if i < 0 then false else (
+    if i == -1 then false else (
     if a.(i) land b.(i) > 0
     then true
     else (search (i - 1))
@@ -52,7 +52,7 @@ let clear_all a =
 
 let has_any a =
   let rec search i =
-    if i < 0 then false else (
+    if i == -1 then false else (
     if a.(i) > 0
     then true
     else (search (i - 1))
@@ -120,25 +120,31 @@ let filter fn a =
   ) a;
   acc
 
-let first a =
+let find_left fn a =
   let n = Array.length(a) * bucket_size in
   let rec search i =
-    if i > n then None else (
-    if get a i
+    if i == n then None else (
+    if (get a i) && (fn i)
     then Some i
     else search (i + 1)
   ) in
   search 0
 
-let last a =
+let find_right fn a =
   let n = Array.length(a) * bucket_size in
   let rec search i =
-    if i < 0 then None else (
-    if get a i
+    if i == -1 then None else (
+    if (get a i) && (fn i)
     then Some i
     else search (i - 1)
   ) in
   search (n - 1)
+
+let first a =
+  find_left (fun _ -> true) a
+
+let last a =
+  find_right (fun _ -> true) a
 
 let of_list l =
   Array.of_list l

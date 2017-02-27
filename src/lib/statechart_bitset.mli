@@ -21,6 +21,8 @@ val iter_right : (int -> unit) -> t -> unit
 val fold_left : ('a -> int -> 'a) -> 'a -> t -> 'a
 val fold_right : ('a -> int -> 'a) -> 'a -> t -> 'a
 val filter : (int -> bool) -> t -> t
+val find_left : (int -> bool) -> t -> int option
+val find_right : (int -> bool) -> t -> int option
 val first : t -> int option
 val last : t -> int option
 
