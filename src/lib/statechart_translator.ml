@@ -72,9 +72,16 @@ let has_history children state_map =
   in
   find 0
 
-let get_history_completion state states =
-  (* TODO *)
-  [||]
+let filter_history_completion history states children =
+  children
+  |> Bitset.filter (fun i ->
+    i != history && (
+      let state = IntMap.find i states in
+      let t = state.Tgt.State.t in
+      t != `history_shallow && t != `history_deep
+    )
+  )
+  |> Bitset.to_idx_array
 
 let find_initial states children =
   match Array.length children with
@@ -91,15 +98,19 @@ let find_initial states children =
     in
     find 0
 
-let get_completion state completions state_map states descendants =
+let get_completion state initials state_map states descendants =
   match state with
-  (* TODO filter history children *)
-  | {Tgt.State.t=`history_deep; idx; children} ->
-    Array.append children (Bitset.to_idx_array (Array.get descendants idx))
-  | {Tgt.State.t=`history_shallow; children} -> children
-  | {Tgt.State.t=`parallel; children} -> children
+  | {Tgt.State.t=`history_deep; idx; parent} ->
+    Array.get descendants parent
+    |> filter_history_completion idx states
+  | {Tgt.State.t=`history_shallow; idx; parent} ->
+    (IntMap.find parent states).Tgt.State.children
+    |> Bitset.of_idx_array (IntMap.cardinal states)
+    |> filter_history_completion idx states
+  | {Tgt.State.t=`parallel; children} ->
+    children
   | {Tgt.State.idx=idx} -> (
-    match maybe_find completions idx with
+    match maybe_find initials idx with
     | Some initial when (initial != []) -> resolve_list state_map initial
     | _ -> find_initial states state.Tgt.State.children
   )
