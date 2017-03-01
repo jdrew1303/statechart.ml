@@ -3,13 +3,21 @@ module Bitset = Statechart_bitset
 
 let for_all fn arr =
   let n = Array.length arr in
-  let rec find i =
-    let cont = i < n in
-    if cont && (fn arr.(i))
-    then find (i + 1)
-    else not cont
+  let rec loop i =
+    if i = n then true
+    else if fn arr.(i) then loop (succ i)
+    else false
   in
-  find 0
+  loop 0
+
+let for_any fn arr =
+  let n = Array.length arr in
+  let rec loop i =
+    if i = n then false
+    else if fn arr.(i) then true
+    else loop (succ i)
+  in
+  loop 0
 
 let filter_state_type bitset states fn =
   Bitset.filter (fun i ->

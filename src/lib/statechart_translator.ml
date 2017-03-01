@@ -61,25 +61,24 @@ let maybe_find map k =
   with
   | _ -> None
 
-let has_history children state_map =
-  let n = Array.length children in
-  let rec find i =
-    if i >= n then false
-    else (
-      let {Tgt.State.t} = IntMap.find i state_map in
-      (t == `history_deep || t == `history_shallow) || find (i + 1)
-    )
-  in
-  find 0
+let is_history state_map i =
+  let {Tgt.State.t} = IntMap.find i state_map in
+  t == `history_deep || t == `history_shallow
 
-let filter_history_completion history states children =
+let has_history descendants state_map s =
+  match s with
+  | {Tgt.State.idx; parent; t} when t == `history_deep || t == `history_shallow ->
+    let desc = Bitset.copy (Array.get descendants parent) in
+    Bitset.clear desc idx;
+    let desc = Bitset.to_idx_array desc in
+    for_any (is_history state_map) desc
+  | {Tgt.State.children; idx} ->
+    for_any (is_history state_map) children
+
+let filter_history_completion history state_map children =
   children
   |> Bitset.filter (fun i ->
-    i != history && (
-      let state = IntMap.find i states in
-      let t = state.Tgt.State.t in
-      t != `history_shallow && t != `history_deep
-    )
+    i != history && not (is_history state_map i)
   )
   |> Bitset.to_idx_array
 
@@ -98,7 +97,7 @@ let find_initial states children =
     in
     find 0
 
-let get_completion state initials state_map states descendants =
+let get_completion state state_initials state_map states descendants =
   match state with
   | {Tgt.State.t=`history_deep; idx; parent} ->
     Array.get descendants parent
@@ -110,7 +109,7 @@ let get_completion state initials state_map states descendants =
   | {Tgt.State.t=`parallel; children} ->
     children
   | {Tgt.State.idx=idx} -> (
-    match maybe_find initials idx with
+    match maybe_find state_initials idx with
     | Some initial when (initial != []) -> resolve_list state_map initial
     | _ -> find_initial states state.Tgt.State.children
   )
@@ -119,7 +118,7 @@ let flatten document =
   let states = ref IntMap.empty in
   let state_idx = ref 0 in
   let state_map = ref StringMap.empty in
-  let state_completions = ref IntMap.empty in
+  let state_initials = ref IntMap.empty in
   let state_descendants = ref IntMap.empty in
   let transitions = ref IntMap.empty in
   let transition_idx = ref 0 in
@@ -137,7 +136,7 @@ let flatten document =
     let idx = get_next state_idx in
     let children, on_enter, on_exit, transitions, invocations =
       translate_children document.Src.Document.children idx [] in
-    set_mut state_completions idx document.Src.Document.initial;
+    set_mut state_initials idx document.Src.Document.initial;
     set_mut states idx {
       Tgt.State.t=`compound;
       idx;
@@ -162,7 +161,7 @@ let flatten document =
     let children, on_enter, on_exit, transitions, invocations =
       translate_children state.Src.State.children idx ancestors in
     maybe_map_state idx state.Src.State.id;
-    set_mut state_completions idx state.Src.State.initial;
+    set_mut state_initials idx state.Src.State.initial;
     set_mut states idx {
       Tgt.State.t=(match children with
       | [||] -> `atomic
@@ -308,7 +307,7 @@ let flatten document =
       ancestors=Array.of_list ancestors;
       completion=[||];
       transitions;
-      has_history=true;
+      has_history=false;
     };
     idx
 
@@ -457,8 +456,8 @@ let flatten document =
 
   let states = !states in
   let state_map = !state_map in
+  let state_initials = !state_initials in
   let state_bitset = Bitset.of_idx_array (IntMap.cardinal states) in
-  let state_completions = !state_completions in
   let descendants = map_to_array !state_descendants state_bitset in
 
   let transitions = !transitions in
@@ -466,13 +465,13 @@ let flatten document =
   let transition_count = IntMap.cardinal transitions in
 
   let states = map_to_array states (fun s ->
-    let completion = get_completion s state_completions state_map states descendants in
+    let completion = get_completion s state_initials state_map states descendants in
     let children = s.Tgt.State.children in
     {s with
       Tgt.State.completion=state_bitset completion;
       ancestors=state_bitset s.Tgt.State.ancestors;
       children=state_bitset children;
-      has_history=s.Tgt.State.has_history || (has_history children states);
+      has_history=has_history descendants states s;
       transitions=Bitset.of_idx_array transition_count s.Tgt.State.transitions;
     }
   ) in

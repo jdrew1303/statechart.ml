@@ -4,6 +4,7 @@ open Statechart_t
 
 let datamodels = [|
     "ecmascript", Statechart_ecmascript.parse;
+    "null", Statechart_null.parse;
   |]
 
 let handle_result res =

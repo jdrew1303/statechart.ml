@@ -44,9 +44,9 @@ test/w3c: test/w3c.tar.gz
 	@tar -xf $< -C test
 
 test/w3c.tar.gz:
-	@wget -P test https://github.com/statechart/scxml-test-suite/releases/download/1.0/w3c.tar.gz
+	@wget -P test https://github.com/statechart/scxml-test-suite/releases/download/1.0.1-protobuf-alpha/w3c.tar.gz
 
-js-package: src/null/statechart_null_parser.ml
+js-package: src/null/statechart_null_parser.ml vendor/flow_parser
 	@yarn build
 	@rm src/null/statechart_null_parser.ml src/null/statechart_null_parser.mli
 	@./node_modules/.bin/rollup -c js/rollup.config.js
@@ -55,5 +55,8 @@ js-package: src/null/statechart_null_parser.ml
 
 src/null/statechart_null_parser.ml: src/null/statechart_null_parser.mly
 	@ocamlyacc $<
+
+vendor/flow_parser:
+	@mkdir -p vendor
 
 .PHONY: js-package

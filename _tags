@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: a13a603290019ffacac00ce3a06c2ae0)
+# DO NOT EDIT (digest: a76f60ef0923fc53d107d1390902a03e)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -41,6 +41,7 @@ true: annot, bin_annot
 <src/scxml_cli/scxml.{native,byte}>: use_statechart
 <src/scxml_cli/scxml.{native,byte}>: use_statechart_ecmascript
 <src/scxml_cli/scxml.{native,byte}>: use_statechart_format
+<src/scxml_cli/scxml.{native,byte}>: use_statechart_null
 <src/scxml_cli/scxml.{native,byte}>: use_statechart_scxml
 <src/scxml_cli/*.ml{,i,y}>: package(cmdliner)
 <src/scxml_cli/*.ml{,i,y}>: package(flow_parser)
@@ -50,6 +51,7 @@ true: annot, bin_annot
 <src/scxml_cli/*.ml{,i,y}>: use_statechart
 <src/scxml_cli/*.ml{,i,y}>: use_statechart_ecmascript
 <src/scxml_cli/*.ml{,i,y}>: use_statechart_format
+<src/scxml_cli/*.ml{,i,y}>: use_statechart_null
 <src/scxml_cli/*.ml{,i,y}>: use_statechart_scxml
 # Executable test_statechart
 <test/test_statechart.{native,byte}>: package(alcotest)
@@ -61,6 +63,7 @@ true: annot, bin_annot
 <test/test_statechart.{native,byte}>: use_statechart
 <test/test_statechart.{native,byte}>: use_statechart_ecmascript
 <test/test_statechart.{native,byte}>: use_statechart_format
+<test/test_statechart.{native,byte}>: use_statechart_null
 <test/test_statechart.{native,byte}>: use_statechart_scxml
 <test/*.ml{,i,y}>: package(alcotest)
 <test/*.ml{,i,y}>: package(crunch)
@@ -71,6 +74,7 @@ true: annot, bin_annot
 <test/*.ml{,i,y}>: use_statechart
 <test/*.ml{,i,y}>: use_statechart_ecmascript
 <test/*.ml{,i,y}>: use_statechart_format
+<test/*.ml{,i,y}>: use_statechart_null
 <test/*.ml{,i,y}>: use_statechart_scxml
 # OASIS_STOP
 "lib": -traverse
